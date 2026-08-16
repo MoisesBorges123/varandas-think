@@ -1,0 +1,104 @@
+services:
+  # Aplicação PHP (servidor embutido do artisan) - único container de app/web
+  app:
+    build:
+      context: ./docker/php
+      dockerfile: Dockerfile
+    container_name: varandas_app
+    restart: unless-stopped
+    working_dir: /var/www
+    environment:
+      # Volume montado do Windows é lento para muitos arquivos pequenos (composer install)
+      COMPOSER_PROCESS_TIMEOUT: 1800
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./:/var/www
+    networks:
+      - varandas-network
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  # MySQL Database
+  db:
+    image: mysql:8.0
+    container_name: varandas_db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:-varandas}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-secret}
+      MYSQL_USER: ${DB_USERNAME:-varandas}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-secret}
+      MYSQL_ALLOW_EMPTY_PASSWORD: 0
+    ports:
+      - "3306:3306"
+    volumes:
+      - varandas-db-data:/var/lib/mysql
+      - ./docker/mysql/my.cnf:/etc/mysql/conf.d/my.cnf
+    networks:
+      - varandas-network
+    command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u${DB_USERNAME:-varandas}", "-p${DB_PASSWORD:-secret}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # Redis Cache
+  redis:
+    image: redis:alpine
+    container_name: varandas_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - varandas-redis-data:/data
+    networks:
+      - varandas-network
+
+  # Node.js para compilar assets com hot-reload (opcional, dev)
+  node:
+    image: node:18-alpine
+    container_name: varandas_node
+    working_dir: /var/www
+    volumes:
+      - ./:/var/www
+    ports:
+      - "5173:5173"
+    networks:
+      - varandas-network
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    profiles:
+      - dev
+
+  # PhpMyAdmin (opcional, apenas para desenvolvimento)
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: varandas_phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      PMA_USER: ${DB_USERNAME:-varandas}
+      PMA_PASSWORD: ${DB_PASSWORD:-secret}
+    ports:
+      - "8080:80"
+    networks:
+      - varandas-network
+    depends_on:
+      - db
+    profiles:
+      - dev
+
+networks:
+  varandas-network:
+    driver: bridge
+
+volumes:
+  varandas-db-data:
+    driver: local
+  varandas-redis-data:
+    driver: local

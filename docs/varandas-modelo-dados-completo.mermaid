@@ -1,0 +1,275 @@
+erDiagram
+
+    CATEGORIAS ||--o{ PRODUTOS : contem
+    GRUPOS_EQUIVALENCIA ||--o{ INGREDIENTES : agrupa
+    PRODUTOS ||--o{ PRECOS_PRODUTOS : possui
+    PRODUTOS ||--o| RECEITAS : tem
+    RECEITAS ||--o{ INGREDIENTES_RECEITA : usa
+    INGREDIENTES ||--o{ INGREDIENTES_RECEITA : compoe
+    PRODUTOS ||--o{ CONVERSOES_PRODUTO : converte
+
+    MESAS ||--o{ COMANDAS : recebe
+    USUARIOS ||--o{ COMANDAS : atende_garcom
+    COMANDAS ||--o{ ITENS_PEDIDO : contem
+    PRODUTOS ||--o{ ITENS_PEDIDO : referenciado_em
+    PRECOS_PRODUTOS ||--o{ ITENS_PEDIDO : precifica
+    USUARIOS ||--o{ ITENS_PEDIDO : aprova_rejeita_cancela
+
+    COMANDAS ||--o{ PAGAMENTOS : recebe
+    PAGAMENTOS ||--o{ PAGAMENTOS_ITENS : cobre
+    ITENS_PEDIDO ||--o{ PAGAMENTOS_ITENS : coberto_por
+
+    COMANDAS ||--o{ AJUSTES_COMANDA : recebe
+    USUARIOS ||--o{ AJUSTES_COMANDA : aplica
+
+    PRODUTOS ||--o{ VENDAS_AVULSAS : vendido_em
+    USUARIOS ||--o{ VENDAS_AVULSAS : registra
+
+    INGREDIENTES ||--o{ MOVIMENTACOES_ESTOQUE : movimenta
+
+    FORNECEDORES ||--o{ COMPRAS : fornece
+    COMPRAS ||--o{ ITENS_COMPRA : contem
+    INGREDIENTES ||--o{ ITENS_COMPRA : referenciado_em
+
+    PERFIS ||--o{ USUARIOS : classifica
+    PERFIS ||--o{ PERFIS_PERMISSOES : possui
+    PERMISSOES ||--o{ PERFIS_PERMISSOES : concedida_em
+
+    USUARIOS ||--o{ DESPESAS : lanca
+
+    CATEGORIAS {
+        bigint id PK
+        string nome
+        enum destino_impressao "cozinha, bar, balcao, nenhum"
+        boolean ativo
+        datetime created_at
+        datetime updated_at
+        datetime deleted_at
+        bigint created_by FK
+    }
+
+    PRODUTOS {
+        bigint id PK
+        bigint categoria_id FK
+        string nome
+        enum tipo "preparado, avulso"
+        boolean ativo
+        boolean disponivel
+        boolean valida_estoque_automatico
+        datetime created_at
+        datetime updated_at
+        datetime deleted_at
+        bigint created_by FK
+    }
+
+    PRECOS_PRODUTOS {
+        bigint id PK
+        bigint produto_id FK
+        decimal preco
+        datetime vigente_desde
+        datetime created_at
+        bigint created_by FK
+    }
+
+    RECEITAS {
+        bigint id PK
+        bigint produto_id FK
+        datetime created_at
+        datetime updated_at
+        datetime deleted_at
+    }
+
+    INGREDIENTES_RECEITA {
+        bigint id PK
+        bigint receita_id FK
+        bigint ingrediente_id FK
+        decimal quantidade
+        string unidade_medida
+    }
+
+    GRUPOS_EQUIVALENCIA {
+        bigint id PK
+        string nome
+        decimal custo_medio_ponderado
+        datetime updated_at
+    }
+
+    INGREDIENTES {
+        bigint id PK
+        bigint grupo_equivalencia_id FK "nullable, alerta de pendencia se nulo"
+        string nome
+        string unidade_medida
+        string codigo_fiscal
+        datetime created_at
+        datetime updated_at
+        datetime deleted_at
+    }
+
+    CONVERSOES_PRODUTO {
+        bigint id PK
+        bigint produto_id FK
+        string unidade_compra "ex: gramas"
+        decimal quantidade_unidade_compra "ex: 500"
+        int rende_quantidade_venda "ex: 200 unidades"
+    }
+
+    MESAS {
+        bigint id PK
+        string numero
+        datetime created_at
+        datetime deleted_at
+    }
+
+    COMANDAS {
+        bigint id PK
+        bigint mesa_id FK "nullable"
+        bigint garcom_id FK "nullable"
+        enum tipo "individual, compartilhada"
+        enum status "aberta, fechada"
+        string cliente_nome "nullable"
+        string cliente_cpf "nullable"
+        string cliente_telefone "nullable"
+        datetime aberta_em
+        datetime fechada_em "nullable"
+        datetime created_at
+        datetime updated_at
+    }
+
+    ITENS_PEDIDO {
+        bigint id PK
+        bigint comanda_id FK
+        bigint produto_id FK
+        bigint preco_produto_id FK
+        int quantidade
+        string pedido_por_nome "nullable"
+        enum origem "garcom, cliente_app"
+        enum status "pendente_aprovacao, aprovado, rejeitado, enviado_cozinha, pronto, liberado_balcao, entregue, cancelado, indisponivel_estoque"
+        bigint aprovado_por FK "nullable"
+        bigint cancelado_por FK "nullable"
+        bigint lancado_por FK "para regra de cancelamento por autor"
+        datetime hora_pedido
+        datetime hora_aprovacao "nullable"
+        datetime hora_pronto "nullable"
+        datetime hora_liberado_balcao "nullable"
+        datetime hora_entregue "nullable"
+        datetime created_at
+        datetime deleted_at
+    }
+
+    PAGAMENTOS {
+        bigint id PK
+        bigint comanda_id FK
+        enum tipo "item_especifico, valor_livre"
+        decimal valor
+        string nome_pagador "nullable"
+        enum forma_pagamento "api_point, celular_aproximacao, pix_celular, pix_qrcode_impresso"
+        string mp_payment_id "nullable"
+        enum status "pendente, confirmado, estornado"
+        datetime created_at
+    }
+
+    PAGAMENTOS_ITENS {
+        bigint id PK
+        bigint pagamento_id FK
+        bigint item_pedido_id FK
+    }
+
+    AJUSTES_COMANDA {
+        bigint id PK
+        bigint comanda_id FK
+        enum tipo "acrescimo, desconto"
+        decimal valor
+        string motivo "nullable"
+        bigint aplicado_por FK
+        datetime created_at
+    }
+
+    VENDAS_AVULSAS {
+        bigint id PK
+        bigint produto_id FK
+        int quantidade
+        decimal valor_total
+        enum forma_pagamento "api_point, celular_aproximacao, pix_celular"
+        bigint vendido_por FK
+        datetime created_at
+    }
+
+    MOVIMENTACOES_ESTOQUE {
+        bigint id PK
+        bigint ingrediente_id FK
+        enum tipo "entrada, saida, ajuste"
+        decimal quantidade
+        string origem_tipo "compra, receita, venda_avulsa, ajuste_manual"
+        bigint origem_id "nullable"
+        datetime created_at
+        bigint created_by FK
+    }
+
+    FORNECEDORES {
+        bigint id PK
+        string cnpj
+        string razao_social
+        string nome_fantasia "nullable"
+        datetime created_at
+    }
+
+    COMPRAS {
+        bigint id PK
+        bigint fornecedor_id FK
+        string chave_acesso_nf "unique"
+        string xml_path
+        date data_compra
+        decimal valor_total
+        datetime created_at
+        bigint created_by FK
+    }
+
+    ITENS_COMPRA {
+        bigint id PK
+        bigint compra_id FK
+        bigint ingrediente_id FK
+        string codigo_fiscal
+        decimal quantidade
+        string unidade
+        decimal preco_unitario
+    }
+
+    USUARIOS {
+        bigint id PK
+        bigint perfil_id FK
+        string nome
+        string email
+        string senha_hash
+        boolean ativo
+        datetime created_at
+        datetime deleted_at
+    }
+
+    PERFIS {
+        bigint id PK
+        string nome "administrador, balconista, cozinheiro, garcom"
+        datetime created_at
+    }
+
+    PERMISSOES {
+        bigint id PK
+        char codigo "6 digitos numericos, fixo, unico, gerado pelo scanner"
+        string modulo "definido via atributo HasPermissions na classe"
+        string nome_legivel "editavel livremente, nao afeta o codigo fixo"
+        datetime created_at
+    }
+
+    PERFIS_PERMISSOES {
+        bigint perfil_id FK
+        bigint permissao_id FK
+    }
+
+    DESPESAS {
+        bigint id PK
+        string descricao
+        decimal valor
+        string categoria_despesa
+        date data
+        bigint created_by FK
+        datetime created_at
+    }

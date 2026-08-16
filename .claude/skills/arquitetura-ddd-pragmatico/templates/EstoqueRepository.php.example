@@ -1,0 +1,145 @@
+<?php
+
+namespace App\Repositories\Estoque;
+
+use App\Models\Ingrediente;
+use App\Repositories\Base\Repository;
+use Illuminate\Support\Collection;
+
+/**
+ * EXEMPLO de referência — mostra o padrão real do projeto: Eloquent e SQL
+ * raw (via TraitsBd, herdada de Repository) convivendo na mesma classe,
+ * escolhidos método a método conforme a complexidade da consulta.
+ */
+class EstoqueRepository extends Repository
+{
+    /**
+     * Conexão padrão do Laravel (MySQL/MariaDB) — a mesma usada pelo
+     * restante do projeto. Só sobrescreva $connection aqui se este
+     * Repository específico precisar de uma conexão nomeada diferente.
+     */
+    protected string $connection = 'mysql';
+
+    public function __construct(Ingrediente $model)
+    {
+        parent::__construct($model);
+    }
+
+    /**
+     * Busca simples por nome — Eloquent puro, não justifica SQL raw.
+     */
+    public function findByNome(string $nome): ?Ingrediente
+    {
+        return $this->model
+            ->where('nome', $nome)
+            ->first();
+    }
+
+    /**
+     * Insumos sem grupo de equivalência vinculado — usado pelo alerta de
+     * pendência (CLAUDE.md, seção 3.1). Filtro simples, Eloquent resolve
+     * bem.
+     */
+    public function getSemGrupoEquivalencia(): Collection
+    {
+        return $this->model
+            ->whereNull('grupo_equivalencia_id')
+            ->get();
+    }
+
+    /**
+     * Atualização simples de um campo — Eloquent via query(), sem
+     * necessidade de SQL raw.
+     */
+    public function vincularGrupoEquivalencia(int $ingredienteId, int $grupoId): bool
+    {
+        return $this->query()
+            ->where('id', $ingredienteId)
+            ->update(['grupo_equivalencia_id' => $grupoId]);
+    }
+
+    /**
+     * Saldo de estoque consolidado por GRUPO DE EQUIVALÊNCIA (CLAUDE.md,
+     * seção 3.1): soma todas as movimentações de todos os ingredientes
+     * que pertencem ao grupo, como SUM(entrada) - SUM(saída). Esse tipo
+     * de agregação cruzando duas tabelas com GROUP BY é mais direto e
+     * mais performático em SQL raw do que forçado no Eloquent.
+     */
+    public function getSaldoConsolidadoPorGrupo(int $grupoEquivalenciaId): float
+    {
+        $sql = <<<SQL
+            SELECT
+                COALESCE(SUM(
+                    CASE WHEN movimentacoes_estoque.tipo = 'entrada'
+                         THEN movimentacoes_estoque.quantidade
+                         ELSE -movimentacoes_estoque.quantidade
+                    END
+                ), 0) AS saldo
+            FROM movimentacoes_estoque
+            JOIN ingredientes
+                ON ingredientes.id = movimentacoes_estoque.ingrediente_id
+            WHERE ingredientes.grupo_equivalencia_id = :GRUPO_EQUIVALENCIA_ID
+        SQL;
+
+        $resultado = $this->executeFetchAssoc($sql, [
+            ':GRUPO_EQUIVALENCIA_ID' => $grupoEquivalenciaId,
+        ])->first();
+
+        return (float) ($resultado['saldo'] ?? 0);
+    }
+
+    /**
+     * Comparação de preço do mesmo insumo entre fornecedores ao longo do
+     * tempo (CLAUDE.md, seção 7 — importação de nota fiscal). Relatório
+     * com JOIN + agregação, mais legível em SQL raw.
+     */
+    public function getHistoricoPrecoPorFornecedor(int $ingredienteId): Collection
+    {
+        $sql = <<<SQL
+            SELECT
+                fornecedores.razao_social,
+                itens_compra.preco_unitario,
+                itens_compra.quantidade,
+                compras.data_compra
+            FROM itens_compra
+            JOIN compras
+                ON compras.id = itens_compra.compra_id
+            JOIN fornecedores
+                ON fornecedores.id = compras.fornecedor_id
+            WHERE itens_compra.ingrediente_id = :INGREDIENTE_ID
+            ORDER BY compras.data_compra DESC
+        SQL;
+
+        return $this->executeFetchAssoc($sql, [
+            ':INGREDIENTE_ID' => $ingredienteId,
+        ]);
+    }
+
+    /**
+     * Recalcula e grava o custo médio ponderado do grupo de equivalência
+     * (CLAUDE.md, seção 3.1) a partir do histórico de compras. Exemplo de
+     * executeUpdate() para um UPDATE que não passa pelo Eloquent porque
+     * envolve um cálculo agregado no próprio SQL.
+     */
+    public function recalcularCustoMedioPonderado(int $grupoEquivalenciaId): void
+    {
+        $sql = <<<SQL
+            UPDATE grupos_equivalencia
+            SET custo_medio_ponderado = (
+                SELECT
+                    SUM(itens_compra.preco_unitario * itens_compra.quantidade)
+                    / NULLIF(SUM(itens_compra.quantidade), 0)
+                FROM itens_compra
+                JOIN ingredientes
+                    ON ingredientes.id = itens_compra.ingrediente_id
+                WHERE ingredientes.grupo_equivalencia_id = :GRUPO_EQUIVALENCIA_ID_CALC
+            )
+            WHERE grupos_equivalencia.id = :GRUPO_EQUIVALENCIA_ID
+        SQL;
+
+        $this->executeUpdate($sql, [
+            ':GRUPO_EQUIVALENCIA_ID_CALC' => $grupoEquivalenciaId,
+            ':GRUPO_EQUIVALENCIA_ID' => $grupoEquivalenciaId,
+        ]);
+    }
+}
