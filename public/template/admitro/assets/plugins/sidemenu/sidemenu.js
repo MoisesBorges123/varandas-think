@@ -20,15 +20,21 @@
 	});
   
 	// Activate sidebar slide toggle
-	$("[data-toggle='slide']").click(function(event) {
+	//
+	// Delegado em document (não bind direto nos elementos): o Varandas usa
+	// Livewire wire:navigate, e o sidebar é re-renderizado (não persistido)
+	// a cada navegação para manter a classe "ativo" correta — delegação
+	// garante que o clique continue funcionando mesmo se o morph do
+	// Livewire substituir os nós ao invés de só atualizar atributos.
+	$(document).on('click', "[data-toggle='slide']", function(event) {
 		event.preventDefault();
 		if(!$(this).parent().hasClass('is-expanded')) {
 			slideMenu.find("[data-toggle='slide']").parent().removeClass('is-expanded');
 		}
 		$(this).parent().toggleClass('is-expanded');
 	});
-	
-	$("[data-toggle='sub-slide']").click(function(event) {
+
+	$(document).on('click', "[data-toggle='sub-slide']", function(event) {
 		event.preventDefault();
 		if(!$(this).parent().hasClass('is-expanded')) {
 			slideMenu.find("[data-toggle='sub-slide']").parent().removeClass('is-expanded');
@@ -44,19 +50,14 @@
 
 	//Activate bootstrip tooltips
 	$("[data-toggle='tooltip']").tooltip();
-	
-	
+
 	// ______________Active Class
-	$(".app-sidebar li a").each(function() {
-	  var pageUrl = window.location.href.split(/[?#]/)[0];
-		if (this.href == pageUrl) { 
-			$(this).addClass("active");
-			$(this).parent().addClass("active"); // add active to li of the current link
-			$(this).parent().parent().prev().addClass("active"); // add active class to an anchor
-			$(this).parent().parent().parent().parent().parent().addClass("active"); 
-			$(this).parent().parent().prev().click(); // click the item to make it drop
-		}
-	});
-	
+	//
+	// Removido: o cálculo de "ativo" deste tema (baseado em comparar
+	// window.location.href uma única vez) conflitava com o cálculo do
+	// servidor (Blade, via request()->is(...) em cada render) — o Varandas
+	// usa Livewire wire:navigate, então essa classe precisa ser recalculada
+	// a cada navegação, o que só o Blade faz corretamente. Ver
+	// resources/views/components/layouts/template/admitro/partials/sidebar.blade.php.
 
 })();

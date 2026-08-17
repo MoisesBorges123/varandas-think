@@ -15,7 +15,8 @@ class IngredienteIndex extends Component
 
     public function confirmarExclusao(int $ingredienteId): void
     {
-        $this->dispatch('swal', [
+        // "..." obrigatório — ver comentário equivalente em CategoriaIndex.
+        $this->dispatch('swal', ...[
             'title' => 'Excluir insumo?',
             'message' => 'Essa ação não pode ser desfeita.',
             'type' => 'warning',

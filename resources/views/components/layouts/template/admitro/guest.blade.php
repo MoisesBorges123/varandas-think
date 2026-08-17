@@ -31,15 +31,19 @@
 
     {{ $slot }}
 
-    <!-- Jquery js-->
-    <script src="{{ asset('template/admitro/assets/js/jquery-3.5.1.min.js') }}"></script>
+    {{-- Persistido: evita reexecutar os scripts a cada wire:navigate entre
+         login/esqueci-senha (mesmo motivo do layout app, ver comentário lá). --}}
+    @persist('admitro-scripts-guest')
+        <!-- Jquery js-->
+        <script src="{{ asset('template/admitro/assets/js/jquery-3.5.1.min.js') }}"></script>
 
-    <!-- Bootstrap4 js-->
-    <script src="{{ asset('template/admitro/assets/plugins/bootstrap/popper.min.js') }}"></script>
-    <script src="{{ asset('template/admitro/assets/plugins/bootstrap/js/bootstrap.min.js') }}"></script>
+        <!-- Bootstrap4 js-->
+        <script src="{{ asset('template/admitro/assets/plugins/bootstrap/popper.min.js') }}"></script>
+        <script src="{{ asset('template/admitro/assets/plugins/bootstrap/js/bootstrap.min.js') }}"></script>
 
-    <!-- Custom js-->
-    <script src="{{ asset('template/admitro/assets/js/custom.js') }}"></script>
+        <!-- Custom js-->
+        <script src="{{ asset('template/admitro/assets/js/custom.js') }}"></script>
+    @endpersist
 
     <!-- App JS/CSS (SweetAlert2, toastr, bridge com Livewire) - depois do jQuery do Admitro -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])

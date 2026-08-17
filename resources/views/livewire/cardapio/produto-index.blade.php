@@ -3,16 +3,16 @@
         <div class="page-leftheader">
             <h4 class="page-title mb-0">Produtos</h4>
             <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{{ route('painel') }}">Painel</a></li>
+                <li class="breadcrumb-item"><a href="{{ route('painel') }}" wire:navigate>Painel</a></li>
                 <li class="breadcrumb-item active">Cardápio</li>
                 <li class="breadcrumb-item active">Produtos</li>
             </ol>
         </div>
         <div class="page-rightheader">
-            <a href="{{ route('cardapio.categorias.index') }}" class="btn btn-outline-secondary">
+            <a href="{{ route('cardapio.categorias.index') }}" wire:navigate class="btn btn-outline-secondary">
                 <i class="fe fe-list mr-1"></i> Categorias
             </a>
-            <a href="{{ route('cardapio.produtos.criar') }}" class="btn btn-primary">
+            <a href="{{ route('cardapio.produtos.criar') }}" wire:navigate class="btn btn-primary">
                 <i class="fe fe-plus mr-1"></i> Novo produto
             </a>
         </div>
@@ -54,11 +54,11 @@
                                         </span>
                                     </td>
                                     <td class="text-right">
-                                        <a href="{{ route('cardapio.produtos.editar', $produto) }}" class="btn btn-sm btn-icon btn-info" title="Editar">
+                                        <a href="{{ route('cardapio.produtos.editar', $produto) }}" wire:navigate class="btn btn-sm btn-icon btn-info" title="Editar">
                                             <i class="fe fe-edit"></i>
                                         </a>
                                         @if ($produto->tipo === \App\Enums\Cardapio\TipoProduto::PREPARADO)
-                                            <a href="{{ route('estoque.receitas.editar', $produto) }}" class="btn btn-sm btn-icon btn-primary" title="Receita">
+                                            <a href="{{ route('estoque.receitas.editar', $produto) }}" wire:navigate class="btn btn-sm btn-icon btn-primary" title="Receita">
                                                 <i class="fe fe-clipboard"></i>
                                             </a>
                                         @endif

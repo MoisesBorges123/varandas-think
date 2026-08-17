@@ -12,7 +12,8 @@ class GrupoEquivalenciaIndex extends Component
 
     public function confirmarExclusao(int $grupoId): void
     {
-        $this->dispatch('swal', [
+        // "..." obrigatório — ver comentário equivalente em CategoriaIndex.
+        $this->dispatch('swal', ...[
             'title' => 'Excluir grupo de equivalência?',
             'message' => 'Essa ação não pode ser desfeita.',
             'type' => 'warning',

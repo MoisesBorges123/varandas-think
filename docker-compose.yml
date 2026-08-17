@@ -74,6 +74,25 @@ services:
     profiles:
       - dev
 
+  # Cypress (testes E2E) - roda contra o container "app" pela rede interna.
+  # Usa a imagem oficial cypress/included (já traz Node + navegador), já que
+  # o serviço "node" acima é alpine e não tem as libs de sistema necessárias
+  # para rodar um navegador de verdade.
+  cypress:
+    image: cypress/included:13.17.0
+    container_name: varandas_cypress
+    working_dir: /e2e
+    environment:
+      CYPRESS_BASE_URL: http://app:8000
+    volumes:
+      - ./:/e2e
+    networks:
+      - varandas-network
+    depends_on:
+      - app
+    profiles:
+      - test
+
   # PhpMyAdmin (opcional, apenas para desenvolvimento)
   phpmyadmin:
     image: phpmyadmin/phpmyadmin

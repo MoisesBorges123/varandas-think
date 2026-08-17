@@ -3,16 +3,16 @@
         <div class="page-leftheader">
             <h4 class="page-title mb-0">Insumos</h4>
             <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{{ route('painel') }}">Painel</a></li>
+                <li class="breadcrumb-item"><a href="{{ route('painel') }}" wire:navigate>Painel</a></li>
                 <li class="breadcrumb-item active">Estoque</li>
                 <li class="breadcrumb-item active">Insumos</li>
             </ol>
         </div>
         <div class="page-rightheader">
-            <a href="{{ route('estoque.grupos.index') }}" class="btn btn-outline-secondary">
+            <a href="{{ route('estoque.grupos.index') }}" wire:navigate class="btn btn-outline-secondary">
                 <i class="fe fe-layers mr-1"></i> Grupos de equivalência
             </a>
-            <a href="{{ route('estoque.ingredientes.criar') }}" class="btn btn-primary">
+            <a href="{{ route('estoque.ingredientes.criar') }}" wire:navigate class="btn btn-primary">
                 <i class="fe fe-plus mr-1"></i> Novo insumo
             </a>
         </div>
@@ -66,7 +66,7 @@
                                     </td>
                                     <td>{{ $ingrediente->codigo_fiscal ?: '—' }}</td>
                                     <td class="text-right">
-                                        <a href="{{ route('estoque.ingredientes.editar', $ingrediente) }}" class="btn btn-sm btn-icon btn-info" title="Editar">
+                                        <a href="{{ route('estoque.ingredientes.editar', $ingrediente) }}" wire:navigate class="btn btn-sm btn-icon btn-info" title="Editar">
                                             <i class="fe fe-edit"></i>
                                         </a>
                                         <button type="button" wire:click="confirmarExclusao({{ $ingrediente->id }})" class="btn btn-sm btn-icon btn-danger" title="Excluir">

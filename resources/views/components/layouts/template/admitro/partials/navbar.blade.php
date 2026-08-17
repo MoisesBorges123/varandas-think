@@ -2,7 +2,7 @@
 <div class="app-header header">
     <div class="container-fluid">
         <div class="d-flex">
-            <a class="header-brand" href="{{ url('/painel') }}">
+            <a class="header-brand" href="{{ url('/painel') }}" wire:navigate>
                 <img src="{{ asset('images/logomarca.png') }}" class="header-brand-img desktop-lgo" alt="Varandas" style="max-height: 32px;">
                 <img src="{{ asset('images/logo-quarada.jpg') }}" class="header-brand-img mobile-logo" alt="Varandas" style="max-height: 32px;">
             </a>

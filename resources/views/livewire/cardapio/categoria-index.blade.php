@@ -3,13 +3,13 @@
         <div class="page-leftheader">
             <h4 class="page-title mb-0">Categorias</h4>
             <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{{ route('painel') }}">Painel</a></li>
-                <li class="breadcrumb-item"><a href="{{ route('cardapio.produtos.index') }}">Cardápio</a></li>
+                <li class="breadcrumb-item"><a href="{{ route('painel') }}" wire:navigate>Painel</a></li>
+                <li class="breadcrumb-item"><a href="{{ route('cardapio.produtos.index') }}" wire:navigate>Cardápio</a></li>
                 <li class="breadcrumb-item active">Categorias</li>
             </ol>
         </div>
         <div class="page-rightheader">
-            <a href="{{ route('cardapio.categorias.criar') }}" class="btn btn-primary">
+            <a href="{{ route('cardapio.categorias.criar') }}" wire:navigate class="btn btn-primary">
                 <i class="fe fe-plus mr-1"></i> Nova categoria
             </a>
         </div>
@@ -42,7 +42,7 @@
                                         </span>
                                     </td>
                                     <td class="text-right">
-                                        <a href="{{ route('cardapio.categorias.editar', $categoria) }}" class="btn btn-sm btn-icon btn-info" title="Editar">
+                                        <a href="{{ route('cardapio.categorias.editar', $categoria) }}" wire:navigate class="btn btn-sm btn-icon btn-info" title="Editar">
                                             <i class="fe fe-edit"></i>
                                         </a>
                                         <button type="button" wire:click="alternarAtivo({{ $categoria->id }})" class="btn btn-sm btn-icon btn-warning" title="Ativar/Inativar">

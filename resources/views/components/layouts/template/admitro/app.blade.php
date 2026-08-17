@@ -32,15 +32,25 @@
 </head>
 <body class="app sidebar-mini dark-mode">
 
-    <!-- Global Loader -->
-    <div id="global-loader">
-        <img src="{{ asset('template/admitro/assets/images/svgs/loader.svg') }}" alt="loader">
-    </div>
+    {{-- Splash de carregamento: persistido para só aparecer/esconder uma vez
+         (o tema esconde via evento "load" do navegador, que não dispara de
+         novo em navegações wire:navigate). --}}
+    @persist('global-loader')
+        <div id="global-loader">
+            <img src="{{ asset('template/admitro/assets/images/svgs/loader.svg') }}" alt="loader">
+        </div>
+    @endpersist
 
     <!-- Page -->
     <div class="page">
         <div class="page-main">
 
+            {{-- Propositalmente NÃO persistido: o "ativo" do menu é
+                 calculado no servidor (request()->is(...)) e precisa ser
+                 recalculado a cada navegação. O morph do Livewire já evita
+                 destruir/recriar o DOM que não mudou, então isso não perde
+                 performance — só garante que a classe correta seja aplicada
+                 sempre. --}}
             @include('components.layouts.template.admitro.partials.sidebar')
 
             <div class="app-content main-content">
@@ -62,26 +72,34 @@
         </div>
     </div>
 
-    <!-- Jquery js-->
-    <script src="{{ asset('template/admitro/assets/js/jquery-3.5.1.min.js') }}"></script>
+    {{-- Scripts do tema persistidos: rodam uma única vez. Esses plugins
+         assumem um carregamento de página clássico (ex.: custom.js só
+         esconde o loader no evento "load", que não repete em SPA) — sem
+         @persist eles seriam reinjetados e reexecutados a cada
+         wire:navigate, duplicando listeners e quebrando plugins que não
+         suportam reinicialização (ex.: PerfectScrollbar). --}}
+    @persist('admitro-scripts')
+        <!-- Jquery js-->
+        <script src="{{ asset('template/admitro/assets/js/jquery-3.5.1.min.js') }}"></script>
 
-    <!-- Bootstrap4 js-->
-    <script src="{{ asset('template/admitro/assets/plugins/bootstrap/popper.min.js') }}"></script>
-    <script src="{{ asset('template/admitro/assets/plugins/bootstrap/js/bootstrap.min.js') }}"></script>
+        <!-- Bootstrap4 js-->
+        <script src="{{ asset('template/admitro/assets/plugins/bootstrap/popper.min.js') }}"></script>
+        <script src="{{ asset('template/admitro/assets/plugins/bootstrap/js/bootstrap.min.js') }}"></script>
 
-    <!--Sidemenu js-->
-    <script src="{{ asset('template/admitro/assets/plugins/sidemenu/sidemenu.js') }}"></script>
+        <!--Sidemenu js-->
+        <script src="{{ asset('template/admitro/assets/plugins/sidemenu/sidemenu.js') }}"></script>
 
-    <!-- P-scroll js-->
-    <script src="{{ asset('template/admitro/assets/plugins/p-scrollbar/p-scrollbar.js') }}"></script>
-    <script src="{{ asset('template/admitro/assets/plugins/p-scrollbar/p-scroll1.js') }}"></script>
-    <script src="{{ asset('template/admitro/assets/plugins/p-scrollbar/p-scroll.js') }}"></script>
+        <!-- P-scroll js-->
+        <script src="{{ asset('template/admitro/assets/plugins/p-scrollbar/p-scrollbar.js') }}"></script>
+        <script src="{{ asset('template/admitro/assets/plugins/p-scrollbar/p-scroll1.js') }}"></script>
+        <script src="{{ asset('template/admitro/assets/plugins/p-scrollbar/p-scroll.js') }}"></script>
 
-    <!-- Simplebar JS -->
-    <script src="{{ asset('template/admitro/assets/plugins/simplebar/js/simplebar.min.js') }}"></script>
+        <!-- Simplebar JS -->
+        <script src="{{ asset('template/admitro/assets/plugins/simplebar/js/simplebar.min.js') }}"></script>
 
-    <!-- Custom js-->
-    <script src="{{ asset('template/admitro/assets/js/custom.js') }}"></script>
+        <!-- Custom js-->
+        <script src="{{ asset('template/admitro/assets/js/custom.js') }}"></script>
+    @endpersist
 
     <!-- App JS/CSS (SweetAlert2, toastr, bridge com Livewire) - depois do jQuery do Admitro -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])

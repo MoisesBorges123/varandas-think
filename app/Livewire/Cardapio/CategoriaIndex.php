@@ -19,7 +19,13 @@ class CategoriaIndex extends Component
 
     public function confirmarExclusao(int $categoriaId): void
     {
-        $this->dispatch('swal', [
+        // O "..." é obrigatório: espalha o array como argumentos NOMEADOS
+        // no variádico dispatch(...$params). Sem ele, o array vira um
+        // único argumento posicional e chega no JS como [ {...} ] (um
+        // array com um item) em vez de um objeto plano — e
+        // Livewire.on('swal', (params) => params.title) simplesmente
+        // nunca acha os campos.
+        $this->dispatch('swal', ...[
             'title' => 'Excluir categoria?',
             'message' => 'Essa ação não pode ser desfeita.',
             'type' => 'warning',

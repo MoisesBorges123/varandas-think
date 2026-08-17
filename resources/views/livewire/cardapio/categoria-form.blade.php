@@ -3,8 +3,8 @@
         <div class="page-leftheader">
             <h4 class="page-title mb-0">{{ $categoria ? 'Editar categoria' : 'Nova categoria' }}</h4>
             <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{{ route('painel') }}">Painel</a></li>
-                <li class="breadcrumb-item"><a href="{{ route('cardapio.categorias.index') }}">Categorias</a></li>
+                <li class="breadcrumb-item"><a href="{{ route('painel') }}" wire:navigate>Painel</a></li>
+                <li class="breadcrumb-item"><a href="{{ route('cardapio.categorias.index') }}" wire:navigate>Categorias</a></li>
                 <li class="breadcrumb-item active">{{ $categoria ? 'Editar' : 'Nova' }}</li>
             </ol>
         </div>
@@ -47,7 +47,7 @@
                                 <span wire:loading.remove wire:target="salvar">Salvar</span>
                                 <span wire:loading wire:target="salvar">Salvando...</span>
                             </button>
-                            <a href="{{ route('cardapio.categorias.index') }}" class="btn btn-link">Cancelar</a>
+                            <a href="{{ route('cardapio.categorias.index') }}" wire:navigate class="btn btn-link">Cancelar</a>
                         </div>
                     </form>
                 </div>

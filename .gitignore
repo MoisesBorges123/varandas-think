@@ -38,3 +38,8 @@ yarn.lock
 
 # Logs
 *.log
+
+# Cypress
+/cypress/screenshots
+/cypress/videos
+/cypress/downloads

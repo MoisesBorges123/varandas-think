@@ -41,7 +41,7 @@
                                         <input type="checkbox" wire:model="remember" class="custom-control-input">
                                         <span class="custom-control-label">Lembrar-me</span>
                                     </label>
-                                    <a href="{{ route('password.request') }}" class="btn-link">Esqueci minha senha</a>
+                                    <a href="{{ route('password.request') }}" wire:navigate class="btn-link">Esqueci minha senha</a>
                                 </div>
 
                                 <div class="row">

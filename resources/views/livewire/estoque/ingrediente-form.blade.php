@@ -3,8 +3,8 @@
         <div class="page-leftheader">
             <h4 class="page-title mb-0">{{ $ingrediente ? 'Editar insumo' : 'Novo insumo' }}</h4>
             <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{{ route('painel') }}">Painel</a></li>
-                <li class="breadcrumb-item"><a href="{{ route('estoque.ingredientes.index') }}">Insumos</a></li>
+                <li class="breadcrumb-item"><a href="{{ route('painel') }}" wire:navigate>Painel</a></li>
+                <li class="breadcrumb-item"><a href="{{ route('estoque.ingredientes.index') }}" wire:navigate>Insumos</a></li>
                 <li class="breadcrumb-item active">{{ $ingrediente ? 'Editar' : 'Novo' }}</li>
             </ol>
         </div>
@@ -54,7 +54,7 @@
                                 <span wire:loading.remove wire:target="salvar">Salvar</span>
                                 <span wire:loading wire:target="salvar">Salvando...</span>
                             </button>
-                            <a href="{{ route('estoque.ingredientes.index') }}" class="btn btn-link">Cancelar</a>
+                            <a href="{{ route('estoque.ingredientes.index') }}" wire:navigate class="btn btn-link">Cancelar</a>
                         </div>
                     </form>
                 </div>

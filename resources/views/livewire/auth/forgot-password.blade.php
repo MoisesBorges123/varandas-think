@@ -15,7 +15,7 @@
                                 <div class="alert alert-success">
                                     Se o e-mail informado existir em nosso cadastro, enviamos um link para redefinir a senha.
                                 </div>
-                                <a href="{{ route('login') }}" class="btn-link">Voltar para o login</a>
+                                <a href="{{ route('login') }}" wire:navigate class="btn-link">Voltar para o login</a>
                             @else
                                 <p class="text-muted mb-4">Informe seu e-mail e enviaremos um link para redefinir sua senha.</p>
 
@@ -41,7 +41,7 @@
                                         </div>
                                     </div>
                                     <div class="text-center mt-4">
-                                        <a href="{{ route('login') }}" class="btn-link">Voltar para o login</a>
+                                        <a href="{{ route('login') }}" wire:navigate class="btn-link">Voltar para o login</a>
                                     </div>
                                 </form>
                             @endif

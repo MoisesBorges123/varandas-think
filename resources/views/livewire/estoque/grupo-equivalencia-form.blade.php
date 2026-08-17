@@ -3,8 +3,8 @@
         <div class="page-leftheader">
             <h4 class="page-title mb-0">{{ $grupo ? 'Editar grupo de equivalência' : 'Novo grupo de equivalência' }}</h4>
             <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="{{ route('painel') }}">Painel</a></li>
-                <li class="breadcrumb-item"><a href="{{ route('estoque.grupos.index') }}">Grupos de equivalência</a></li>
+                <li class="breadcrumb-item"><a href="{{ route('painel') }}" wire:navigate>Painel</a></li>
+                <li class="breadcrumb-item"><a href="{{ route('estoque.grupos.index') }}" wire:navigate>Grupos de equivalência</a></li>
                 <li class="breadcrumb-item active">{{ $grupo ? 'Editar' : 'Novo' }}</li>
             </ol>
         </div>
@@ -37,7 +37,7 @@
                                 <span wire:loading.remove wire:target="salvar">Salvar</span>
                                 <span wire:loading wire:target="salvar">Salvando...</span>
                             </button>
-                            <a href="{{ route('estoque.grupos.index') }}" class="btn btn-link">Cancelar</a>
+                            <a href="{{ route('estoque.grupos.index') }}" wire:navigate class="btn btn-link">Cancelar</a>
                         </div>
                     </form>
                 </div>
