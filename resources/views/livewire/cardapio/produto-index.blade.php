@@ -57,6 +57,11 @@
                                         <a href="{{ route('cardapio.produtos.editar', $produto) }}" class="btn btn-sm btn-icon btn-info" title="Editar">
                                             <i class="fe fe-edit"></i>
                                         </a>
+                                        @if ($produto->tipo === \App\Enums\Cardapio\TipoProduto::PREPARADO)
+                                            <a href="{{ route('estoque.receitas.editar', $produto) }}" class="btn btn-sm btn-icon btn-primary" title="Receita">
+                                                <i class="fe fe-clipboard"></i>
+                                            </a>
+                                        @endif
                                         <button type="button" wire:click="alternarDisponivel({{ $produto->id }})" class="btn btn-sm btn-icon btn-warning" title="Disponível/Indisponível">
                                             <i class="fe fe-toggle-left"></i>
                                         </button>

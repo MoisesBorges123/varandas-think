@@ -12,6 +12,7 @@
                 </a>
             </div>
             <div class="d-flex order-lg-2 ml-auto">
+                <livewire:shared.notificacoes-sino />
                 <div class="dropdown profile-dropdown">
                     <a href="#" class="nav-link pr-0 leading-none d-flex align-items-center" data-toggle="dropdown">
                         <span class="mr-2 d-none d-md-inline">{{ auth()->user()->nome }}</span>

@@ -35,5 +35,15 @@
                 <li><a href="{{ route('cardapio.produtos.index') }}" class="slide-item {{ request()->routeIs('cardapio.produtos.*') ? 'active' : '' }}">Produtos</a></li>
             </ul>
         </li>
+        <li class="slide {{ request()->is('estoque/*') ? 'is-expanded' : '' }}">
+            <a class="side-menu__item {{ request()->is('estoque/*') ? 'active' : '' }}" data-toggle="slide" href="#">
+                <svg class="side-menu__icon" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M20 2H4c-1 0-2 .9-2 2v3.01c0 .72.43 1.34 1 1.69V20c0 1.1 1.1 2 2 2h14c.9 0 2-.9 2-2V8.7c.57-.35 1-.97 1-1.69V4c0-1.1-1-2-2-2zm-5 12H9v-2h6v2zm5-7H4V4h16v3z"/></svg>
+                <span class="side-menu__label">Estoque</span><i class="angle fa fa-angle-right"></i>
+            </a>
+            <ul class="slide-menu">
+                <li><a href="{{ route('estoque.grupos.index') }}" class="slide-item {{ request()->routeIs('estoque.grupos.*') ? 'active' : '' }}">Grupos de equivalência</a></li>
+                <li><a href="{{ route('estoque.ingredientes.index') }}" class="slide-item {{ request()->routeIs('estoque.ingredientes.*') ? 'active' : '' }}">Insumos</a></li>
+            </ul>
+        </li>
     </ul>
 </aside>
