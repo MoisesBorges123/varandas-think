@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('email', 100)->unique();
             $table->string('senha_hash');
             $table->boolean('ativo')->default(true);
+            $table->rememberToken();
             $table->timestamps();
             $table->softDeletes();
             

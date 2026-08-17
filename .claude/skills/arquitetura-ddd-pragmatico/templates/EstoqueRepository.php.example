@@ -14,11 +14,11 @@ use Illuminate\Support\Collection;
 class EstoqueRepository extends Repository
 {
     /**
-     * Conexão padrão do Laravel (MySQL/MariaDB) — a mesma usada pelo
-     * restante do projeto. Só sobrescreva $connection aqui se este
-     * Repository específico precisar de uma conexão nomeada diferente.
+     * `null` = conexão padrão do Laravel (mysql em dev/produção, sqlite em
+     * testes). Só sobrescreva $connection aqui se este Repository
+     * específico precisar de uma conexão nomeada diferente.
      */
-    protected string $connection = 'mysql';
+    protected ?string $connection = null;
 
     public function __construct(Ingrediente $model)
     {

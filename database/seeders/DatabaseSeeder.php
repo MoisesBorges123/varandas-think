@@ -2,7 +2,9 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
+use App\Enums\Usuario\PerfilNome;
+use App\Models\Perfil;
+use App\Models\Usuario;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -15,11 +17,20 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        $perfis = collect(PerfilNome::cases())->mapWithKeys(
+            fn (PerfilNome $perfilNome) => [
+                $perfilNome->value => Perfil::firstOrCreate(['nome' => $perfilNome->value]),
+            ]
+        );
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        Usuario::firstOrCreate(
+            ['email' => 'admin@varandas.local'],
+            [
+                'perfil_id' => $perfis[PerfilNome::ADMINISTRADOR->value]->id,
+                'nome' => 'Administrador',
+                'password' => 'password',
+                'ativo' => true,
+            ]
+        );
     }
 }
