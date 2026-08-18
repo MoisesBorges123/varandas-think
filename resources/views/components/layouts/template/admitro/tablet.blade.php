@@ -11,8 +11,8 @@
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:600,700,800&display=swap" rel="stylesheet" />
 
-    <!-- Template Admitro CSS (minimal) -->
-    <link rel="stylesheet" href="{{ asset('template/admitro/assets/css/main.css') }}">
+    <!-- Template Admitro CSS -->
+    <link rel="stylesheet" href="{{ asset('template/admitro/assets/css/style.css') }}">
 
     <!-- Tablet Specific CSS -->
     <style>

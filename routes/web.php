@@ -4,6 +4,11 @@ use App\Livewire\Cardapio\CategoriaForm;
 use App\Livewire\Cardapio\CategoriaIndex;
 use App\Livewire\Cardapio\ProdutoForm;
 use App\Livewire\Cardapio\ProdutoIndex;
+use App\Livewire\Comanda\ComandaAbrirForm;
+use App\Livewire\Comanda\ComandaIndex;
+use App\Livewire\Comanda\ConfiguracaoForm;
+use App\Livewire\Comanda\MesaForm;
+use App\Livewire\Comanda\MesaIndex;
 use App\Livewire\Estoque\CompraIndex;
 use App\Livewire\Estoque\CompraManualForm;
 use App\Livewire\Estoque\ConversaoProdutoForm;
@@ -15,6 +20,8 @@ use App\Livewire\Estoque\IngredienteForm;
 use App\Livewire\Estoque\ImportarNotaFiscal;
 use App\Livewire\Estoque\IngredienteIndex;
 use App\Livewire\Estoque\ReceitaForm;
+use App\Livewire\Publico\ComandaAcesso;
+use App\Livewire\Publico\MesaAcesso;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -68,4 +75,27 @@ Route::middleware('auth')->prefix('estoque')->name('estoque.')->group(function (
         Route::get('/', CompraIndex::class)->name('index');
         Route::get('/manual', CompraManualForm::class)->name('manual');
     });
+});
+
+Route::middleware('auth')->prefix('mesas')->name('mesas.')->group(function () {
+    Route::get('/', MesaIndex::class)->name('index');
+    Route::get('/criar', MesaForm::class)->name('criar');
+    Route::get('/{mesa}/editar', MesaForm::class)->name('editar');
+});
+
+Route::middleware('auth')->prefix('comandas')->name('comandas.')->group(function () {
+    Route::get('/', ComandaIndex::class)->name('index');
+    Route::get('/abrir', ComandaAbrirForm::class)->name('abrir');
+    Route::get('/configuracoes', ConfiguracaoForm::class)->name('configuracoes');
+});
+
+// ==================================================================
+// ROTAS PÚBLICAS — SEM MIDDLEWARE 'auth' (fluxo do cliente via QR code)
+// O gate real é geolocalização + status da comanda, verificado DENTRO
+// dos componentes Livewire (não há sessão de cliente autenticada).
+// Ver CLAUDE.md seção 4.1/4.4.
+// ==================================================================
+Route::prefix('comanda')->name('publico.comanda.')->group(function () {
+    Route::get('/mesa/{token}', MesaAcesso::class)->name('mesa');
+    Route::get('/{token}', ComandaAcesso::class)->name('acesso');
 });

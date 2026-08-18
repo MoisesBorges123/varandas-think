@@ -49,5 +49,21 @@
                 <li><a href="{{ route('estoque.compras.index') }}" wire:navigate class="slide-item {{ request()->routeIs('estoque.compras.index') ? 'active' : '' }}">Compras</a></li>
             </ul>
         </li>
+        @php
+            $emMesasOuComandas = request()->is('mesas') || request()->is('mesas/*')
+                || request()->is('comandas') || request()->is('comandas/*');
+        @endphp
+        <li class="slide {{ $emMesasOuComandas ? 'is-expanded' : '' }}">
+            <a class="side-menu__item {{ $emMesasOuComandas ? 'active' : '' }}" data-toggle="slide" href="#">
+                <svg class="side-menu__icon" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M4 10h3v7H4zm6.5 0h3v7h-3zM2 19h20v2H2zM17 10h3v7h-3zM12 1L2 6v2h20V6z"/></svg>
+                <span class="side-menu__label">Mesas e Comandas</span><i class="angle fa fa-angle-right"></i>
+            </a>
+            <ul class="slide-menu">
+                <li><a href="{{ route('mesas.index') }}" wire:navigate class="slide-item {{ request()->routeIs('mesas.*') ? 'active' : '' }}">Mesas</a></li>
+                <li><a href="{{ route('comandas.index') }}" wire:navigate class="slide-item {{ request()->routeIs('comandas.index') ? 'active' : '' }}">Comandas</a></li>
+                <li><a href="{{ route('comandas.abrir') }}" wire:navigate class="slide-item {{ request()->routeIs('comandas.abrir') ? 'active' : '' }}">Abrir Comanda</a></li>
+                <li><a href="{{ route('comandas.configuracoes') }}" wire:navigate class="slide-item {{ request()->routeIs('comandas.configuracoes') ? 'active' : '' }}">Configurações de Localização</a></li>
+            </ul>
+        </li>
     </ul>
 </aside>
