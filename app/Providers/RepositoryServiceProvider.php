@@ -4,15 +4,25 @@ namespace App\Providers;
 
 use App\Repositories\Cardapio\CategoriaRepository;
 use App\Repositories\Cardapio\ProdutoRepository;
+use App\Repositories\Contracts\CategoriaCompraRepositoryInterface;
 use App\Repositories\Contracts\CategoriaRepositoryInterface;
+use App\Repositories\Contracts\CompraRepositoryInterface;
+use App\Repositories\Contracts\ConversaoProdutoRepositoryInterface;
+use App\Repositories\Contracts\FornecedorRepositoryInterface;
 use App\Repositories\Contracts\GrupoEquivalenciaRepositoryInterface;
 use App\Repositories\Contracts\IngredienteRepositoryInterface;
+use App\Repositories\Contracts\MovimentacaoEstoqueRepositoryInterface;
 use App\Repositories\Contracts\NotificacaoRepositoryInterface;
 use App\Repositories\Contracts\ProdutoRepositoryInterface;
 use App\Repositories\Contracts\ReceitaRepositoryInterface;
+use App\Repositories\Estoque\ConversaoProdutoRepository;
 use App\Repositories\Estoque\GrupoEquivalenciaRepository;
 use App\Repositories\Estoque\IngredienteRepository;
 use App\Repositories\Estoque\ReceitaRepository;
+use App\Repositories\NotaFiscal\CategoriaCompraRepository;
+use App\Repositories\NotaFiscal\CompraRepository;
+use App\Repositories\NotaFiscal\FornecedorRepository;
+use App\Repositories\NotaFiscal\MovimentacaoEstoqueRepository;
 use App\Repositories\Notificacao\NotificacaoRepository;
 use Illuminate\Support\ServiceProvider;
 
@@ -26,5 +36,10 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(IngredienteRepositoryInterface::class, IngredienteRepository::class);
         $this->app->bind(ReceitaRepositoryInterface::class, ReceitaRepository::class);
         $this->app->bind(NotificacaoRepositoryInterface::class, NotificacaoRepository::class);
+        $this->app->bind(FornecedorRepositoryInterface::class, FornecedorRepository::class);
+        $this->app->bind(MovimentacaoEstoqueRepositoryInterface::class, MovimentacaoEstoqueRepository::class);
+        $this->app->bind(CompraRepositoryInterface::class, CompraRepository::class);
+        $this->app->bind(ConversaoProdutoRepositoryInterface::class, ConversaoProdutoRepository::class);
+        $this->app->bind(CategoriaCompraRepositoryInterface::class, CategoriaCompraRepository::class);
     }
 }

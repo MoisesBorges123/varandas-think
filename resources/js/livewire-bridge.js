@@ -59,12 +59,17 @@ document.addEventListener('livewire:init', () => {
      * O componente Livewire escuta de volta com:
      *   #[On('cancelar-item-confirmado')]
      *   public function cancelarItemConfirmado($itemPedidoId) { ... }
+     *
+     * Também serve pra modal só de leitura (sem confirmEvent), passando uma
+     * view Blade já renderizada em 'message' e um 'width' maior — usado por
+     * ex. no "ver detalhes da compra" (CompraIndex::verDetalhes()).
      */
     Livewire.on('swal', (params) => {
         Swal.fire({
             title: params.title ?? '',
             html: params.message ?? '',
             icon: params.type ?? 'question',
+            width: params.width ?? undefined,
             confirmButtonColor: params.confirmButtonColor ?? '#3085d6',
             cancelButtonColor: params.cancelButtonColor ?? '#aaa',
             confirmButtonText: params.confirmButtonText ?? 'Ok',

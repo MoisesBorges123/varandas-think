@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nfeProc xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00">
+    <NFe>
+        <infNFe Id="NFe31240811222333000144550010000012345123456789" versao="4.00">
+            <ide>
+                <cUF>31</cUF>
+                <nNF>12345</nNF>
+                <serie>1</serie>
+                <dhEmi>2026-08-17T14:30:00-03:00</dhEmi>
+                <natOp>Venda de mercadoria</natOp>
+            </ide>
+            <emit>
+                <CNPJ>11222333000144</CNPJ>
+                <xNome>Distribuidora Exemplo LTDA</xNome>
+                <xFant>Distribuidora Exemplo</xFant>
+                <enderEmit>
+                    <xLgr>Rua Exemplo</xLgr>
+                    <nro>100</nro>
+                    <xBairro>Centro</xBairro>
+                    <xMun>Belo Horizonte</xMun>
+                    <UF>MG</UF>
+                    <CEP>30000000</CEP>
+                    <xPais>Brasil</xPais>
+                </enderEmit>
+            </emit>
+            <dest>
+                <CNPJ>99888777000166</CNPJ>
+                <xNome>Varandas Bar e Lanchonete</xNome>
+                <enderDest>
+                    <xLgr>Rua do Bar</xLgr>
+                    <nro>50</nro>
+                    <xBairro>Varanda</xBairro>
+                    <xMun>Belo Horizonte</xMun>
+                    <UF>MG</UF>
+                    <CEP>30100000</CEP>
+                    <xPais>Brasil</xPais>
+                </enderDest>
+            </dest>
+            <det nItem="1">
+                <prod>
+                    <cProd>7891234567890</cProd>
+                    <xProd>CENOURA KG</xProd>
+                    <NCM>07061000</NCM>
+                    <CFOP>5102</CFOP>
+                    <CEST>1234567</CEST>
+                    <uCom>KG</uCom>
+                    <qCom>10.0000</qCom>
+                    <vUnCom>5.5000</vUnCom>
+                    <vProd>55.00</vProd>
+                </prod>
+                <imposto>
+                    <ICMS>
+                        <ICMS00>
+                            <orig>0</orig>
+                            <CST>00</CST>
+                        </ICMS00>
+                    </ICMS>
+                </imposto>
+            </det>
+            <det nItem="2">
+                <prod>
+                    <cProd>7899876543210</cProd>
+                    <xProd>ARROZ 5KG</xProd>
+                    <NCM>10063021</NCM>
+                    <CFOP>5102</CFOP>
+                    <CEST>1700100</CEST>
+                    <uCom>UN</uCom>
+                    <qCom>5.0000</qCom>
+                    <vUnCom>22.9000</vUnCom>
+                    <vProd>114.50</vProd>
+                </prod>
+                <imposto>
+                    <ICMS>
+                        <ICMS00>
+                            <orig>0</orig>
+                            <CST>00</CST>
+                        </ICMS00>
+                    </ICMS>
+                </imposto>
+            </det>
+            <total>
+                <ICMSTot>
+                    <vProd>169.50</vProd>
+                    <vDesc>0.00</vDesc>
+                    <vOutro>0.00</vOutro>
+                    <vNF>169.50</vNF>
+                </ICMSTot>
+            </total>
+        </infNFe>
+    </NFe>
+    <protNFe versao="4.00">
+        <infProt>
+            <chNFe>31240811222333000144550010000012345123456789</chNFe>
+            <dhRecbto>2026-08-17T14:31:00-03:00</dhRecbto>
+        </infProt>
+    </protNFe>
+</nfeProc>

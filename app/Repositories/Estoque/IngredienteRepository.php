@@ -35,4 +35,9 @@ class IngredienteRepository extends Repository implements IngredienteRepositoryI
             ->receitas()
             ->count();
     }
+
+    public function encontrarPorCodigoFiscal(string $codigoFiscal): ?Ingrediente
+    {
+        return $this->query()->where('codigo_fiscal', $codigoFiscal)->first();
+    }
 }

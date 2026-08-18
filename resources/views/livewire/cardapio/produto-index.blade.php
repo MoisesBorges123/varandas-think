@@ -61,6 +61,10 @@
                                             <a href="{{ route('estoque.receitas.editar', $produto) }}" wire:navigate class="btn btn-sm btn-icon btn-primary" title="Receita">
                                                 <i class="fe fe-clipboard"></i>
                                             </a>
+                                        @else
+                                            <a href="{{ route('estoque.conversoes.editar', $produto) }}" wire:navigate class="btn btn-sm btn-icon btn-primary" title="Conversão de unidade">
+                                                <i class="fe fe-repeat"></i>
+                                            </a>
                                         @endif
                                         <button type="button" wire:click="alternarDisponivel({{ $produto->id }})" class="btn btn-sm btn-icon btn-warning" title="Disponível/Indisponível">
                                             <i class="fe fe-toggle-left"></i>

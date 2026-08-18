@@ -43,6 +43,10 @@
             <ul class="slide-menu">
                 <li><a href="{{ route('estoque.grupos.index') }}" wire:navigate class="slide-item {{ request()->routeIs('estoque.grupos.*') ? 'active' : '' }}">Grupos de equivalência</a></li>
                 <li><a href="{{ route('estoque.ingredientes.index') }}" wire:navigate class="slide-item {{ request()->routeIs('estoque.ingredientes.*') ? 'active' : '' }}">Insumos</a></li>
+                <li><a href="{{ route('estoque.fornecedores.index') }}" wire:navigate class="slide-item {{ request()->routeIs('estoque.fornecedores.*') ? 'active' : '' }}">Fornecedores</a></li>
+                <li><a href="{{ route('estoque.notas-fiscais.importar') }}" wire:navigate class="slide-item {{ request()->routeIs('estoque.notas-fiscais.*') ? 'active' : '' }}">Importar Nota Fiscal</a></li>
+                <li><a href="{{ route('estoque.compras.manual') }}" wire:navigate class="slide-item {{ request()->routeIs('estoque.compras.manual') ? 'active' : '' }}">Compra sem Nota Fiscal</a></li>
+                <li><a href="{{ route('estoque.compras.index') }}" wire:navigate class="slide-item {{ request()->routeIs('estoque.compras.index') ? 'active' : '' }}">Compras</a></li>
             </ul>
         </li>
     </ul>
