@@ -16,6 +16,7 @@ use App\Repositories\Contracts\ConversaoProdutoRepositoryInterface;
 use App\Repositories\Contracts\FornecedorRepositoryInterface;
 use App\Repositories\Contracts\GrupoEquivalenciaRepositoryInterface;
 use App\Repositories\Contracts\IngredienteRepositoryInterface;
+use App\Repositories\Contracts\ItemPedidoRepositoryInterface;
 use App\Repositories\Contracts\MesaRepositoryInterface;
 use App\Repositories\Contracts\MovimentacaoEstoqueRepositoryInterface;
 use App\Repositories\Contracts\NotificacaoRepositoryInterface;
@@ -30,6 +31,7 @@ use App\Repositories\NotaFiscal\CompraRepository;
 use App\Repositories\NotaFiscal\FornecedorRepository;
 use App\Repositories\NotaFiscal\MovimentacaoEstoqueRepository;
 use App\Repositories\Notificacao\NotificacaoRepository;
+use App\Repositories\Pedido\ItemPedidoRepository;
 use Illuminate\Support\ServiceProvider;
 
 class RepositoryServiceProvider extends ServiceProvider
@@ -50,5 +52,6 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(MesaRepositoryInterface::class, MesaRepository::class);
         $this->app->bind(ComandaRepositoryInterface::class, ComandaRepository::class);
         $this->app->bind(ConfiguracaoRepositoryInterface::class, ConfiguracaoRepository::class);
+        $this->app->bind(ItemPedidoRepositoryInterface::class, ItemPedidoRepository::class);
     }
 }

@@ -65,5 +65,20 @@
                 <li><a href="{{ route('comandas.configuracoes') }}" wire:navigate class="slide-item {{ request()->routeIs('comandas.configuracoes') ? 'active' : '' }}">Configurações de Localização</a></li>
             </ul>
         </li>
+        @php
+            $emPedidos = request()->is('pedidos') || request()->is('pedidos/*')
+                || request()->is('balcao') || request()->is('cozinha');
+        @endphp
+        <li class="slide {{ $emPedidos ? 'is-expanded' : '' }}">
+            <a class="side-menu__item {{ $emPedidos ? 'active' : '' }}" data-toggle="slide" href="#">
+                <svg class="side-menu__icon" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M18 2.01L6 2c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-1.99-2-1.99zM18 20H6V4h12v16zM8 6h8v2H8zm0 4h8v2H8zm0 4h5v2H8z"/></svg>
+                <span class="side-menu__label">Pedidos</span><i class="angle fa fa-angle-right"></i>
+            </a>
+            <ul class="slide-menu">
+                <li><a href="{{ route('pedidos.fila-aprovacao') }}" wire:navigate class="slide-item {{ request()->routeIs('pedidos.fila-aprovacao') ? 'active' : '' }}">Fila de Aprovação</a></li>
+                <li><a href="{{ route('balcao') }}" wire:navigate class="slide-item {{ request()->routeIs('balcao') ? 'active' : '' }}">Painel do Balcão</a></li>
+                <li><a href="{{ route('cozinha') }}" wire:navigate class="slide-item {{ request()->routeIs('cozinha') ? 'active' : '' }}">Cozinha</a></li>
+            </ul>
+        </li>
     </ul>
 </aside>

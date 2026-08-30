@@ -1,5 +1,6 @@
 <?php
 
+use App\Livewire\Balcao\BalcaoPainel;
 use App\Livewire\Cardapio\CategoriaForm;
 use App\Livewire\Cardapio\CategoriaIndex;
 use App\Livewire\Cardapio\ProdutoForm;
@@ -9,6 +10,7 @@ use App\Livewire\Comanda\ComandaIndex;
 use App\Livewire\Comanda\ConfiguracaoForm;
 use App\Livewire\Comanda\MesaForm;
 use App\Livewire\Comanda\MesaIndex;
+use App\Livewire\Cozinha\PainelCozinha;
 use App\Livewire\Estoque\CompraIndex;
 use App\Livewire\Estoque\CompraManualForm;
 use App\Livewire\Estoque\ConversaoProdutoForm;
@@ -20,6 +22,8 @@ use App\Livewire\Estoque\IngredienteForm;
 use App\Livewire\Estoque\ImportarNotaFiscal;
 use App\Livewire\Estoque\IngredienteIndex;
 use App\Livewire\Estoque\ReceitaForm;
+use App\Livewire\Pedido\ComandaItens;
+use App\Livewire\Pedido\FilaAprovacao;
 use App\Livewire\Publico\ComandaAcesso;
 use App\Livewire\Publico\MesaAcesso;
 use Illuminate\Support\Facades\Route;
@@ -87,7 +91,16 @@ Route::middleware('auth')->prefix('comandas')->name('comandas.')->group(function
     Route::get('/', ComandaIndex::class)->name('index');
     Route::get('/abrir', ComandaAbrirForm::class)->name('abrir');
     Route::get('/configuracoes', ConfiguracaoForm::class)->name('configuracoes');
+    Route::get('/{comanda}/itens', ComandaItens::class)->name('itens');
 });
+
+Route::middleware('auth')->prefix('pedidos')->name('pedidos.')->group(function () {
+    Route::get('/fila-aprovacao', FilaAprovacao::class)->name('fila-aprovacao');
+});
+
+Route::get('/balcao', BalcaoPainel::class)->middleware('auth')->name('balcao');
+
+Route::get('/cozinha', PainelCozinha::class)->middleware('auth')->name('cozinha');
 
 // ==================================================================
 // ROTAS PÚBLICAS — SEM MIDDLEWARE 'auth' (fluxo do cliente via QR code)

@@ -18,6 +18,14 @@ class ConfiguracaoForm extends Component
     #[Validate('required|integer|min:1')]
     public string $raioMetros = '';
 
+    public bool $validacaoEstoqueAutomaticaAtiva = false;
+
+    public bool $permitirGarcomCancelarItemColega = false;
+
+    public bool $permitirGarcomExcluirProprioItem = true;
+
+    public bool $permitirGarcomExcluirItemColega = false;
+
     public function mount(ConfiguracaoService $service): void
     {
         $configuracao = $service->obter();
@@ -26,6 +34,10 @@ class ConfiguracaoForm extends Component
             $this->latitude = (string) $configuracao->bar_latitude;
             $this->longitude = (string) $configuracao->bar_longitude;
             $this->raioMetros = (string) $configuracao->raio_metros;
+            $this->validacaoEstoqueAutomaticaAtiva = (bool) $configuracao->validacao_estoque_automatica_ativa;
+            $this->permitirGarcomCancelarItemColega = (bool) $configuracao->permitir_garcom_cancelar_item_colega;
+            $this->permitirGarcomExcluirProprioItem = (bool) $configuracao->permitir_garcom_excluir_proprio_item;
+            $this->permitirGarcomExcluirItemColega = (bool) $configuracao->permitir_garcom_excluir_item_colega;
         }
     }
 

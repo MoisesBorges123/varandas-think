@@ -12,6 +12,14 @@ class ConfiguracaoDTO extends DTOBase
 
     private ?int $raioMetros = null;
 
+    private bool $validacaoEstoqueAutomaticaAtiva = false;
+
+    private bool $permitirGarcomCancelarItemColega = false;
+
+    private bool $permitirGarcomExcluirProprioItem = true;
+
+    private bool $permitirGarcomExcluirItemColega = false;
+
     public function setLatitude(?float $latitude): self
     {
         $this->latitude = $latitude;
@@ -48,12 +56,64 @@ class ConfiguracaoDTO extends DTOBase
         return $this->raioMetros;
     }
 
+    public function setValidacaoEstoqueAutomaticaAtiva(bool $validacaoEstoqueAutomaticaAtiva): self
+    {
+        $this->validacaoEstoqueAutomaticaAtiva = $validacaoEstoqueAutomaticaAtiva;
+
+        return $this;
+    }
+
+    public function getValidacaoEstoqueAutomaticaAtiva(): bool
+    {
+        return $this->validacaoEstoqueAutomaticaAtiva;
+    }
+
+    public function setPermitirGarcomCancelarItemColega(bool $permitirGarcomCancelarItemColega): self
+    {
+        $this->permitirGarcomCancelarItemColega = $permitirGarcomCancelarItemColega;
+
+        return $this;
+    }
+
+    public function getPermitirGarcomCancelarItemColega(): bool
+    {
+        return $this->permitirGarcomCancelarItemColega;
+    }
+
+    public function setPermitirGarcomExcluirProprioItem(bool $permitirGarcomExcluirProprioItem): self
+    {
+        $this->permitirGarcomExcluirProprioItem = $permitirGarcomExcluirProprioItem;
+
+        return $this;
+    }
+
+    public function getPermitirGarcomExcluirProprioItem(): bool
+    {
+        return $this->permitirGarcomExcluirProprioItem;
+    }
+
+    public function setPermitirGarcomExcluirItemColega(bool $permitirGarcomExcluirItemColega): self
+    {
+        $this->permitirGarcomExcluirItemColega = $permitirGarcomExcluirItemColega;
+
+        return $this;
+    }
+
+    public function getPermitirGarcomExcluirItemColega(): bool
+    {
+        return $this->permitirGarcomExcluirItemColega;
+    }
+
     public function toArray(): array
     {
         return [
             'bar_latitude' => $this->latitude,
             'bar_longitude' => $this->longitude,
             'raio_metros' => $this->raioMetros,
+            'validacao_estoque_automatica_ativa' => $this->validacaoEstoqueAutomaticaAtiva,
+            'permitir_garcom_cancelar_item_colega' => $this->permitirGarcomCancelarItemColega,
+            'permitir_garcom_excluir_proprio_item' => $this->permitirGarcomExcluirProprioItem,
+            'permitir_garcom_excluir_item_colega' => $this->permitirGarcomExcluirItemColega,
         ];
     }
 
@@ -71,6 +131,10 @@ class ConfiguracaoDTO extends DTOBase
         return (new static())
             ->setLatitude((float) str_replace(',', '.', (string) $componente->latitude))
             ->setLongitude((float) str_replace(',', '.', (string) $componente->longitude))
-            ->setRaioMetros((int) $componente->raioMetros);
+            ->setRaioMetros((int) $componente->raioMetros)
+            ->setValidacaoEstoqueAutomaticaAtiva((bool) $componente->validacaoEstoqueAutomaticaAtiva)
+            ->setPermitirGarcomCancelarItemColega((bool) $componente->permitirGarcomCancelarItemColega)
+            ->setPermitirGarcomExcluirProprioItem((bool) $componente->permitirGarcomExcluirProprioItem)
+            ->setPermitirGarcomExcluirItemColega((bool) $componente->permitirGarcomExcluirItemColega);
     }
 }

@@ -137,7 +137,8 @@ class AcessoPublicoComandaTest extends TestCase
         foreach ([$htmlTokenInvalido, $htmlFechada, $htmlForaDoRaio] as $html) {
             $this->assertStringNotContainsString('Maria Fechada', $html);
             $this->assertStringNotContainsString('Pedro Longe', $html);
-            $this->assertStringNotContainsString('pedidos-placeholder', $html);
+            $this->assertStringNotContainsString('cardapio-cliente', $html);
+            $this->assertStringNotContainsString('pedidos-vazio', $html);
             $this->assertStringNotContainsString('btn-encerrar-comanda', $html);
         }
     }

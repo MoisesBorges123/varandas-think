@@ -47,6 +47,11 @@ class Produto extends Model
         return $this->hasMany(PrecoProduto::class)->orderByDesc('vigente_desde');
     }
 
+    public function receita(): HasOne
+    {
+        return $this->hasOne(Receita::class);
+    }
+
     /**
      * Preço vigente mais recente (CLAUDE.md, seção 2 — preço é histórico,
      * "preço atual" é sempre o registro mais recente).

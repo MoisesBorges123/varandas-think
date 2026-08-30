@@ -7,6 +7,7 @@ use App\Enums\Comanda\TipoComanda;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Comanda extends Model
 {
@@ -45,6 +46,11 @@ class Comanda extends Model
     public function garcom(): BelongsTo
     {
         return $this->belongsTo(Usuario::class, 'garcom_id');
+    }
+
+    public function itensPedido(): HasMany
+    {
+        return $this->hasMany(ItemPedido::class);
     }
 
     public function estaAberta(): bool

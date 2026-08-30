@@ -1,4 +1,4 @@
-<div>
+<div wire:poll.6s="atualizarItens">
     @if ($encerradaComSucesso)
         <div class="text-center py-3">
             <h5>Comanda encerrada</h5>
@@ -17,11 +17,56 @@
             Comanda {{ $comanda->tipo->label() }} — aberta às {{ $comanda->aberta_em->format('H:i') }}
         </p>
 
-        <div class="text-center text-muted py-4" id="pedidos-placeholder">
-            Nenhum pedido lançado ainda.
+        <div id="cardapio-cliente">
+            @if ($estoqueDuvidoso)
+                <div class="alert alert-warning">
+                    <p class="mb-2">Esse item pode estar em falta agora.</p>
+                    <button type="button" id="btn-confirmar-pedido-aviso" class="btn btn-sm btn-warning">Pedir mesmo assim</button>
+                </div>
+            @else
+                <form id="form-pedir-item" class="mb-4">
+                    <div class="form-group">
+                        <label>O que vai pedir?</label>
+                        <select wire:model="produtoSelecionadoId" class="form-control">
+                            <option value="">Selecione...</option>
+                            @foreach ($produtos as $produto)
+                                <option value="{{ $produto->id }}">{{ $produto->nome }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Quantidade</label>
+                        <input type="text" wire:model="quantidade" class="form-control">
+                    </div>
+
+                    @if ($comanda->tipo->value === 'compartilhada')
+                        <div class="form-group">
+                            <label>Seu nome (opcional)</label>
+                            <input type="text" wire:model="pedidoPorNome" class="form-control">
+                        </div>
+                    @endif
+
+                    <button type="submit" id="btn-pedir-item" class="btn btn-primary btn-block" wire:loading.attr="disabled" wire:target="pedirItem,confirmarPedidoComAviso">
+                        <span wire:loading.remove wire:target="pedirItem,confirmarPedidoComAviso">Pedir</span>
+                        <span wire:loading wire:target="pedirItem,confirmarPedidoComAviso">Enviando...</span>
+                    </button>
+                </form>
+            @endif
         </div>
 
-        <button type="button" id="btn-encerrar-comanda" class="btn btn-outline-danger btn-block" wire:loading.attr="disabled" wire:target="encerrar">
+        <hr>
+
+        @forelse ($comanda->itensPedido as $itemPedido)
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span>{{ $itemPedido->quantidade }}x {{ $itemPedido->produto->nome }}</span>
+                <span class="badge badge-secondary">{{ $itemPedido->status->labelParaCliente() }}</span>
+            </div>
+        @empty
+            <p class="text-center text-muted py-4" id="pedidos-vazio">Nenhum pedido lançado ainda.</p>
+        @endforelse
+
+        <button type="button" id="btn-encerrar-comanda" class="btn btn-outline-danger btn-block mt-4" wire:loading.attr="disabled" wire:target="encerrar">
             <span wire:loading.remove wire:target="encerrar">Encerrar comanda</span>
             <span wire:loading wire:target="encerrar">Encerrando...</span>
         </button>
@@ -63,6 +108,17 @@
         $wire.$el.addEventListener('click', (evento) => {
             if (evento.target.closest('#btn-encerrar-comanda')) {
                 window.pedirLocalizacaoComanda((lat, lng) => $wire.call('encerrar', lat, lng));
+            }
+
+            if (evento.target.closest('#btn-confirmar-pedido-aviso')) {
+                $wire.call('confirmarPedidoComAviso');
+            }
+        });
+
+        $wire.$el.addEventListener('submit', (evento) => {
+            if (evento.target.closest('#form-pedir-item')) {
+                evento.preventDefault();
+                window.pedirLocalizacaoComanda((lat, lng) => $wire.call('pedirItem', lat, lng));
             }
         });
     </script>
