@@ -17,9 +17,20 @@ class VendaAvulsaRepository extends Repository implements VendaAvulsaRepositoryI
     public function listarRecentes(int $limite): Collection
     {
         return $this->query()
-            ->with('produto')
+            ->with('itens.produto')
             ->orderByDesc('created_at')
             ->limit($limite)
             ->get();
+    }
+
+    public function criarComItens(array $dadosVenda, array $itens): VendaAvulsa
+    {
+        $venda = $this->create($dadosVenda);
+
+        foreach ($itens as $item) {
+            $venda->itens()->create($item);
+        }
+
+        return $venda->load('itens.produto');
     }
 }

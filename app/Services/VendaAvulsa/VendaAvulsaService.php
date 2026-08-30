@@ -14,10 +14,10 @@ use App\Services\Base\ServiceBase;
 use Illuminate\Database\Eloquent\Collection;
 
 /**
- * Venda avulsa de balcão (CLAUDE.md seção 3.2) — fluxo completamente
- * separado de comanda/mesa, sem cliente identificado, sem aprovação, e
- * que NUNCA bloqueia por falta de estoque (saldo pode ficar negativo,
- * se normaliza na próxima compra via nota fiscal).
+ * Venda avulsa de balcão (CLAUDE.md seção 3.2) — carrinho com 1 ou mais
+ * produtos e um único pagamento, sem cliente identificado, sem
+ * aprovação, e que NUNCA bloqueia por falta de estoque (saldo pode
+ * ficar negativo, se normaliza na próxima compra via nota fiscal).
  */
 class VendaAvulsaService extends ServiceBase
 {
@@ -33,26 +33,57 @@ class VendaAvulsaService extends ServiceBase
         $dto->validate();
 
         return $this->transaction(function () use ($dto) {
-            $produto = $this->produtoRepository->findOrFail($dto->getProdutoId());
+            $itensParaGravar = [];
+            $conversoesPorProduto = [];
+            $valorTotal = 0.0;
 
-            $this->throwUnless($produto->podeSerVendido(), 'Este produto não está disponível para venda.');
-            $this->throwUnless($produto->tipo === TipoProduto::AVULSO, 'Este produto não é de venda avulsa.');
+            foreach ($dto->getItens() as $itemCarrinho) {
+                $produto = $this->produtoRepository->findOrFail($itemCarrinho['produto_id']);
 
-            $conversao = $produto->conversao;
-            $this->throwUnless((bool) $conversao, 'Este produto não tem conversão de unidade cadastrada.');
+                $this->throwUnless(
+                    $produto->podeSerVendido(),
+                    sprintf('O produto "%s" não está mais disponível para venda.', $produto->nome),
+                );
+                $this->throwUnless(
+                    $produto->tipo === TipoProduto::AVULSO,
+                    sprintf('O produto "%s" não é de venda avulsa.', $produto->nome),
+                );
 
-            $precoAtual = $produto->precoAtual;
-            $this->throwUnless((bool) $precoAtual, 'Este produto não tem preço definido.');
+                $conversao = $produto->conversao;
+                $this->throwUnless(
+                    (bool) $conversao,
+                    sprintf('O produto "%s" não tem conversão de unidade cadastrada.', $produto->nome),
+                );
 
-            $venda = $this->vendaAvulsaRepository->create([
-                'produto_id' => $produto->id,
-                'quantidade' => $dto->getQuantidade(),
-                'valor_total' => $precoAtual->preco * $dto->getQuantidade(),
+                $precoAtual = $produto->precoAtual;
+                $this->throwUnless(
+                    (bool) $precoAtual,
+                    sprintf('O produto "%s" não tem preço definido.', $produto->nome),
+                );
+
+                $quantidade = $itemCarrinho['quantidade'];
+                $valorItem = $precoAtual->preco * $quantidade;
+                $valorTotal += $valorItem;
+
+                $conversoesPorProduto[$produto->id] = $conversao;
+
+                $itensParaGravar[] = [
+                    'produto_id' => $produto->id,
+                    'quantidade' => $quantidade,
+                    'preco_unitario' => $precoAtual->preco,
+                    'valor_total_item' => $valorItem,
+                ];
+            }
+
+            $venda = $this->vendaAvulsaRepository->criarComItens([
+                'valor_total' => $valorTotal,
                 'forma_pagamento' => $dto->getFormaPagamento(),
                 'vendido_por' => $this->userId(),
-            ]);
+            ], $itensParaGravar);
 
-            $this->darBaixaEstoque($conversao, $dto->getQuantidade(), $venda->id);
+            foreach ($venda->itens as $itemGravado) {
+                $this->darBaixaEstoque($conversoesPorProduto[$itemGravado->produto_id], $itemGravado->quantidade, $venda->id);
+            }
 
             return $venda;
         });

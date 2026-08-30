@@ -10,7 +10,7 @@
     </div>
 
     <div class="row">
-        <div class="col-md-8">
+        <div class="col-md-7">
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title">Produtos</h3>
@@ -41,16 +41,55 @@
             </div>
         </div>
 
-        <div class="col-md-4">
+        <div class="col-md-5">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Carrinho</h3>
+                </div>
+                <div class="card-body">
+                    @forelse ($carrinhoDetalhado as $item)
+                        <div class="d-flex justify-content-between align-items-center border-bottom py-2" wire:key="carrinho-item-{{ $item['produto_id'] }}">
+                            <div>
+                                <div>{{ $item['quantidade'] }}x {{ $item['nome'] }}</div>
+                                <div class="text-muted small">R$ {{ number_format($item['subtotal'], 2, ',', '.') }}</div>
+                            </div>
+                            <button type="button" wire:click="removerDoCarrinho({{ $item['produto_id'] }})" class="btn btn-sm btn-icon btn-outline-danger" title="Remover">
+                                <i class="fe fe-x"></i>
+                            </button>
+                        </div>
+                    @empty
+                        <p class="text-muted small mb-0">Nenhum item adicionado ainda. Toque num produto ao lado.</p>
+                    @endforelse
+
+                    @if ($carrinhoDetalhado->isNotEmpty())
+                        <div class="d-flex justify-content-between align-items-center mt-3 mb-3">
+                            <strong>Total</strong>
+                            <strong>R$ {{ number_format($carrinhoTotal, 2, ',', '.') }}</strong>
+                        </div>
+
+                        <button type="button" wire:click="abrirPagamento" class="btn btn-primary btn-block">
+                            Finalizar venda
+                        </button>
+                        <button type="button" wire:click="confirmarCancelarCarrinho" class="btn btn-link btn-block text-danger mb-0">
+                            Cancelar venda
+                        </button>
+                    @endif
+                </div>
+            </div>
+
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title">Últimas vendas</h3>
                 </div>
-                <div class="card-body" style="max-height: 420px; overflow-y: auto;">
+                <div class="card-body" style="max-height: 300px; overflow-y: auto;">
                     @forelse ($vendasRecentes as $venda)
                         <div class="d-flex justify-content-between align-items-start border-bottom py-2" wire:key="venda-recente-{{ $venda->id }}">
                             <div>
-                                <div>{{ $venda->quantidade }}x {{ $venda->produto->nome }}</div>
+                                <div>
+                                    @foreach ($venda->itens as $item)
+                                        {{ $item->quantidade }}x {{ $item->produto->nome }}{{ ! $loop->last ? ', ' : '' }}
+                                    @endforeach
+                                </div>
                                 <div class="text-muted small">{{ $venda->forma_pagamento->label() }} — {{ $venda->created_at->format('H:i') }}</div>
                             </div>
                             <div class="text-nowrap">R$ {{ number_format($venda->valor_total, 2, ',', '.') }}</div>
@@ -83,14 +122,29 @@
                     </button>
                 </div>
 
+                <button type="button" wire:click="adicionarAoCarrinho" class="btn btn-primary btn-block">
+                    Adicionar ao carrinho
+                </button>
+                <button type="button" wire:click="cancelarSelecao" class="btn btn-link btn-block mt-2 mb-0">Cancelar</button>
+            </div>
+        </div>
+    @endif
+
+    @if ($mostrarPagamento)
+        <div class="venda-avulsa-overlay">
+            <div class="venda-avulsa-overlay-fundo" wire:click="fecharPagamento"></div>
+            <div class="venda-avulsa-overlay-painel">
+                <h5 class="text-center mb-1">Finalizar venda</h5>
+                <p class="text-center text-muted mb-3">Total: R$ {{ number_format($carrinhoTotal, 2, ',', '.') }}</p>
+
                 <p class="text-center text-muted small mb-2">Como foi pago?</p>
                 <div class="d-flex flex-wrap justify-content-center" style="gap: .5rem;">
                     @foreach ($formasPagamento as $forma)
                         <button
                             type="button"
-                            wire:click="vender('{{ $forma->value }}')"
+                            wire:click="finalizar('{{ $forma->value }}')"
                             wire:loading.attr="disabled"
-                            wire:target="vender"
+                            wire:target="finalizar"
                             class="btn btn-primary"
                         >
                             {{ $forma->label() }}
@@ -98,7 +152,7 @@
                     @endforeach
                 </div>
 
-                <button type="button" wire:click="cancelarSelecao" class="btn btn-link btn-block mt-3 mb-0">Cancelar</button>
+                <button type="button" wire:click="fecharPagamento" class="btn btn-link btn-block mt-3 mb-0">Voltar</button>
             </div>
         </div>
     @endif

@@ -5,36 +5,31 @@ namespace App\DTO\VendaAvulsa;
 use App\DTO\Base\DTOBase;
 use App\Enums\VendaAvulsa\FormaPagamentoVendaAvulsa;
 
+/**
+ * Carrinho de uma venda avulsa (CLAUDE.md seção 3.2) — 1 ou mais produtos,
+ * um único pagamento. Mesma exceção pragmática do CompraManualDTO: o dado
+ * real é a lista de itens, não campos escalares.
+ */
 class VenderAvulsoDTO extends DTOBase
 {
-    private ?int $produtoId = null;
-
-    private ?int $quantidade = null;
+    /** @var array<int, array{produto_id: int, quantidade: int}> */
+    private array $itens = [];
 
     private ?string $formaPagamento = null;
 
-    public function setProdutoId(?int $produtoId): self
+    /**
+     * @param  array<int, array{produto_id: int, quantidade: int}>  $itens
+     */
+    public function setItens(array $itens): self
     {
-        $this->produtoId = $produtoId;
+        $this->itens = $itens;
 
         return $this;
     }
 
-    public function getProdutoId(): ?int
+    public function getItens(): array
     {
-        return $this->produtoId;
-    }
-
-    public function setQuantidade(?int $quantidade): self
-    {
-        $this->quantidade = $quantidade;
-
-        return $this;
-    }
-
-    public function getQuantidade(): ?int
-    {
-        return $this->quantidade;
+        return $this->itens;
     }
 
     public function setFormaPagamento(?string $formaPagamento): self
@@ -52,16 +47,22 @@ class VenderAvulsoDTO extends DTOBase
     public function toArray(): array
     {
         return [
-            'produto_id' => $this->produtoId,
-            'quantidade' => $this->quantidade,
+            'itens' => $this->itens,
             'forma_pagamento' => $this->formaPagamento,
         ];
     }
 
     public function validate(): self
     {
-        $this->assertPresente($this->produtoId, 'produto_id');
-        $this->assertPositivo($this->quantidade, 'quantidade');
+        if ($this->itens === []) {
+            throw new \InvalidArgumentException('Adicione ao menos um item à venda.');
+        }
+
+        foreach ($this->itens as $item) {
+            $this->assertPresente($item['produto_id'] ?? null, 'produto_id');
+            $this->assertPositivo($item['quantidade'] ?? null, 'quantidade');
+        }
+
         $this->assertPresente($this->formaPagamento, 'forma_pagamento');
 
         if (FormaPagamentoVendaAvulsa::tryFrom((string) $this->formaPagamento) === null) {

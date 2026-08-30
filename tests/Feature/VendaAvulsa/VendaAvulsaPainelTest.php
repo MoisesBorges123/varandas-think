@@ -18,11 +18,11 @@ class VendaAvulsaPainelTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function produtoAvulsoComConversao(string $nome = 'Bala de Goma'): Produto
+    private function produtoAvulsoComConversao(string $nome = 'Bala de Goma', float $preco = 1.50): Produto
     {
         $grupo = GrupoEquivalencia::factory()->create();
         Ingrediente::factory()->create(['grupo_equivalencia_id' => $grupo->id]);
-        $produto = Produto::factory()->comPrecoInicial(1.50)->create([
+        $produto = Produto::factory()->comPrecoInicial($preco)->create([
             'tipo' => TipoProduto::AVULSO->value,
             'nome' => $nome,
         ]);
@@ -64,29 +64,97 @@ class VendaAvulsaPainelTest extends TestCase
             ->assertSet('quantidade', 1);
     }
 
-    public function test_vender_para_cada_forma_de_pagamento_cria_registro_e_reseta_selecao(): void
+    public function test_adicionar_ao_carrinho_acumula_quantidade_do_mesmo_produto(): void
     {
         $usuario = Usuario::factory()->create();
+        $produto = $this->produtoAvulsoComConversao();
 
-        foreach (FormaPagamentoVendaAvulsa::cases() as $forma) {
-            $produto = $this->produtoAvulsoComConversao("Produto {$forma->value}");
-
-            Livewire::actingAs($usuario)
-                ->test(VendaAvulsaPainel::class)
-                ->call('selecionarProduto', $produto->id)
-                ->call('vender', $forma->value)
-                ->assertSet('produtoSelecionadoId', '')
-                ->assertDispatched('toastr');
-
-            $this->assertDatabaseHas('vendas_avulsas', [
-                'produto_id' => $produto->id,
-                'forma_pagamento' => $forma->value,
-                'vendido_por' => $usuario->id,
-            ]);
-        }
+        Livewire::actingAs($usuario)
+            ->test(VendaAvulsaPainel::class)
+            ->call('selecionarProduto', $produto->id)
+            ->call('incrementarQuantidade')
+            ->call('adicionarAoCarrinho') // quantidade 2
+            ->assertSet('carrinho', [$produto->id => 2])
+            ->assertSet('produtoSelecionadoId', '')
+            ->call('selecionarProduto', $produto->id)
+            ->call('adicionarAoCarrinho') // + quantidade 1
+            ->assertSet('carrinho', [$produto->id => 3]);
     }
 
-    public function test_vendas_recentes_aparecem_no_feed_apos_a_venda(): void
+    public function test_carrinho_com_produtos_diferentes(): void
+    {
+        $usuario = Usuario::factory()->create();
+        $produtoA = $this->produtoAvulsoComConversao('Bala');
+        $produtoB = $this->produtoAvulsoComConversao('Chocolate');
+
+        Livewire::actingAs($usuario)
+            ->test(VendaAvulsaPainel::class)
+            ->call('selecionarProduto', $produtoA->id)
+            ->call('adicionarAoCarrinho')
+            ->call('selecionarProduto', $produtoB->id)
+            ->call('adicionarAoCarrinho')
+            ->assertSet('carrinho', [$produtoA->id => 1, $produtoB->id => 1])
+            ->assertViewHas('carrinhoDetalhado', fn ($carrinho) => $carrinho->count() === 2);
+    }
+
+    public function test_remover_do_carrinho(): void
+    {
+        $usuario = Usuario::factory()->create();
+        $produto = $this->produtoAvulsoComConversao();
+
+        Livewire::actingAs($usuario)
+            ->test(VendaAvulsaPainel::class)
+            ->call('selecionarProduto', $produto->id)
+            ->call('adicionarAoCarrinho')
+            ->call('removerDoCarrinho', $produto->id)
+            ->assertSet('carrinho', []);
+    }
+
+    public function test_cancelar_carrinho_via_evento_de_confirmacao_limpa_tudo(): void
+    {
+        $usuario = Usuario::factory()->create();
+        $produto = $this->produtoAvulsoComConversao();
+
+        Livewire::actingAs($usuario)
+            ->test(VendaAvulsaPainel::class)
+            ->call('selecionarProduto', $produto->id)
+            ->call('adicionarAoCarrinho')
+            ->call('abrirPagamento')
+            ->assertSet('mostrarPagamento', true)
+            ->call('cancelarCarrinho')
+            ->assertSet('carrinho', [])
+            ->assertSet('mostrarPagamento', false);
+    }
+
+    public function test_finalizar_com_multiplos_itens_e_forma_de_pagamento_cria_uma_unica_venda(): void
+    {
+        $usuario = Usuario::factory()->create();
+        $produtoA = $this->produtoAvulsoComConversao('Bala', 1.00);
+        $produtoB = $this->produtoAvulsoComConversao('Chocolate', 3.00);
+
+        Livewire::actingAs($usuario)
+            ->test(VendaAvulsaPainel::class)
+            ->call('selecionarProduto', $produtoA->id)
+            ->call('incrementarQuantidade')
+            ->call('adicionarAoCarrinho') // 2x Bala
+            ->call('selecionarProduto', $produtoB->id)
+            ->call('adicionarAoCarrinho') // 1x Chocolate
+            ->call('abrirPagamento')
+            ->call('finalizar', FormaPagamentoVendaAvulsa::PIX_CELULAR->value)
+            ->assertSet('carrinho', [])
+            ->assertSet('mostrarPagamento', false)
+            ->assertDispatched('toastr');
+
+        $this->assertDatabaseCount('vendas_avulsas', 1);
+        $this->assertDatabaseHas('vendas_avulsas', [
+            'forma_pagamento' => FormaPagamentoVendaAvulsa::PIX_CELULAR->value,
+            'valor_total' => 5.00, // 2*1 + 1*3
+            'vendido_por' => $usuario->id,
+        ]);
+        $this->assertDatabaseCount('itens_venda_avulsa', 2);
+    }
+
+    public function test_vendas_recentes_aparecem_no_feed_apos_finalizar(): void
     {
         $usuario = Usuario::factory()->create();
         $produto = $this->produtoAvulsoComConversao('Chocolate');
@@ -94,8 +162,9 @@ class VendaAvulsaPainelTest extends TestCase
         Livewire::actingAs($usuario)
             ->test(VendaAvulsaPainel::class)
             ->call('selecionarProduto', $produto->id)
-            ->call('vender', FormaPagamentoVendaAvulsa::PIX_CELULAR->value)
-            ->assertViewHas('vendasRecentes', fn ($vendas) => $vendas->count() === 1 && $vendas->first()->produto->id === $produto->id);
+            ->call('adicionarAoCarrinho')
+            ->call('finalizar', FormaPagamentoVendaAvulsa::PIX_CELULAR->value)
+            ->assertViewHas('vendasRecentes', fn ($vendas) => $vendas->count() === 1 && $vendas->first()->itens->first()->produto->id === $produto->id);
     }
 
     public function test_incrementar_e_decrementar_quantidade(): void

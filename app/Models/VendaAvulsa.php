@@ -6,7 +6,12 @@ use App\Enums\VendaAvulsa\FormaPagamentoVendaAvulsa;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Cabeçalho de uma venda avulsa de balcão — pode ter 1 ou mais itens
+ * (produtos diferentes), mas um único pagamento (CLAUDE.md seção 3.2).
+ */
 class VendaAvulsa extends Model
 {
     use HasFactory;
@@ -16,8 +21,6 @@ class VendaAvulsa extends Model
     const UPDATED_AT = null;
 
     protected $fillable = [
-        'produto_id',
-        'quantidade',
         'valor_total',
         'forma_pagamento',
         'vendido_por',
@@ -26,15 +29,14 @@ class VendaAvulsa extends Model
     protected function casts(): array
     {
         return [
-            'quantidade' => 'integer',
             'valor_total' => 'decimal:2',
             'forma_pagamento' => FormaPagamentoVendaAvulsa::class,
         ];
     }
 
-    public function produto(): BelongsTo
+    public function itens(): HasMany
     {
-        return $this->belongsTo(Produto::class);
+        return $this->hasMany(ItemVendaAvulsa::class);
     }
 
     public function vendidoPor(): BelongsTo
