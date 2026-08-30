@@ -54,6 +54,11 @@ class Produto extends Model
         return $this->hasOne(Receita::class);
     }
 
+    public function conversao(): HasOne
+    {
+        return $this->hasOne(ConversaoProduto::class);
+    }
+
     public function fotos(): HasMany
     {
         return $this->hasMany(ProdutoFoto::class)->orderBy('ordem');

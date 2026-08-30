@@ -26,6 +26,7 @@ use App\Repositories\Contracts\MovimentacaoEstoqueRepositoryInterface;
 use App\Repositories\Contracts\NotificacaoRepositoryInterface;
 use App\Repositories\Contracts\ProdutoRepositoryInterface;
 use App\Repositories\Contracts\ReceitaRepositoryInterface;
+use App\Repositories\Contracts\VendaAvulsaRepositoryInterface;
 use App\Repositories\Estoque\ConversaoProdutoRepository;
 use App\Repositories\Estoque\GrupoEquivalenciaRepository;
 use App\Repositories\Estoque\IngredienteRepository;
@@ -36,6 +37,7 @@ use App\Repositories\NotaFiscal\FornecedorRepository;
 use App\Repositories\NotaFiscal\MovimentacaoEstoqueRepository;
 use App\Repositories\Notificacao\NotificacaoRepository;
 use App\Repositories\Pedido\ItemPedidoRepository;
+use App\Repositories\VendaAvulsa\VendaAvulsaRepository;
 use Illuminate\Support\ServiceProvider;
 
 class RepositoryServiceProvider extends ServiceProvider
@@ -59,5 +61,6 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(ItemPedidoRepositoryInterface::class, ItemPedidoRepository::class);
         $this->app->bind(FotoProdutoRepositoryInterface::class, FotoProdutoRepository::class);
         $this->app->bind(AvaliacaoProdutoRepositoryInterface::class, AvaliacaoProdutoRepository::class);
+        $this->app->bind(VendaAvulsaRepositoryInterface::class, VendaAvulsaRepository::class);
     }
 }

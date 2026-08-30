@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Balcao\BalcaoPainel;
+use App\Livewire\Balcao\VendaAvulsaPainel;
 use App\Livewire\Cardapio\CategoriaForm;
 use App\Livewire\Cardapio\CategoriaIndex;
 use App\Livewire\Cardapio\ProdutoForm;
@@ -99,6 +100,8 @@ Route::middleware('auth')->prefix('pedidos')->name('pedidos.')->group(function (
 });
 
 Route::get('/balcao', BalcaoPainel::class)->middleware('auth')->name('balcao');
+
+Route::get('/venda-avulsa', VendaAvulsaPainel::class)->middleware('auth')->name('venda-avulsa');
 
 Route::get('/cozinha', PainelCozinha::class)->middleware('auth')->name('cozinha');
 

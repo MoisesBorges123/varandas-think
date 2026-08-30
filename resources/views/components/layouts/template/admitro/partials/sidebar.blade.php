@@ -65,6 +65,12 @@
                 <li><a href="{{ route('comandas.configuracoes') }}" wire:navigate class="slide-item {{ request()->routeIs('comandas.configuracoes') ? 'active' : '' }}">Configurações de Localização</a></li>
             </ul>
         </li>
+        <li class="slide">
+            <a class="side-menu__item {{ request()->is('venda-avulsa') ? 'active' : '' }}" href="{{ route('venda-avulsa') }}" wire:navigate>
+                <svg class="side-menu__icon" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12L8.1 13h7.45c.75 0 1.41-.41 1.75-1.03L21.7 4.96c.07-.13.11-.28.11-.44 0-.55-.45-1-1-1H4.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/></svg>
+                <span class="side-menu__label">Venda Avulsa</span>
+            </a>
+        </li>
         @php
             $emPedidos = request()->is('pedidos') || request()->is('pedidos/*')
                 || request()->is('balcao') || request()->is('cozinha');
