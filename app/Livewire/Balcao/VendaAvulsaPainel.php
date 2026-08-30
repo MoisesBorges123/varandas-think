@@ -26,6 +26,16 @@ class VendaAvulsaPainel extends Component
 
     public bool $mostrarPagamento = false;
 
+    public string $busca = '';
+
+    public string $categoriaId = '';
+
+    public function limparFiltros(): void
+    {
+        $this->busca = '';
+        $this->categoriaId = '';
+    }
+
     public function selecionarProduto(int $produtoId): void
     {
         $this->produtoSelecionadoId = (string) $produtoId;
@@ -125,18 +135,42 @@ class VendaAvulsaPainel extends Component
 
     public function render(VendaAvulsaService $service)
     {
-        $produtos = Produto::query()
+        // Base sem os filtros de busca/categoria — usada pra resolver o
+        // carrinho e o produto selecionado, que precisam continuar válidos
+        // mesmo que o balconista troque o filtro depois de já ter
+        // adicionado um item (senão o item some da tela achando que ficou
+        // indisponível).
+        $todosOsProdutos = Produto::query()
             ->where('tipo', TipoProduto::AVULSO->value)
             ->where('ativo', true)
             ->where('disponivel', true)
             ->whereHas('conversao')
-            ->with('precoAtual')
+            ->with(['precoAtual', 'categoria'])
             ->orderBy('nome')
             ->get();
 
+        $buscaNormalizada = mb_strtolower(trim($this->busca));
+
+        $produtosFiltrados = $todosOsProdutos
+            ->when($buscaNormalizada !== '', fn ($colecao) => $colecao->filter(
+                fn (Produto $produto) => str_contains(mb_strtolower($produto->nome), $buscaNormalizada),
+            ))
+            ->when($this->categoriaId !== '', fn ($colecao) => $colecao->where('categoria_id', (int) $this->categoriaId));
+
+        $produtosPorCategoria = $produtosFiltrados
+            ->groupBy('categoria_id')
+            ->sortBy(fn ($grupo) => $grupo->first()->categoria?->nome ?? 'Sem categoria');
+
+        $categoriasDisponiveis = $todosOsProdutos
+            ->pluck('categoria')
+            ->filter()
+            ->unique('id')
+            ->sortBy('nome')
+            ->values();
+
         $carrinhoDetalhado = collect($this->carrinho)
-            ->map(function ($quantidade, $produtoId) use ($produtos) {
-                $produto = $produtos->firstWhere('id', (int) $produtoId);
+            ->map(function ($quantidade, $produtoId) use ($todosOsProdutos) {
+                $produto = $todosOsProdutos->firstWhere('id', (int) $produtoId);
                 $preco = (float) ($produto?->precoAtual?->preco ?? 0);
 
                 return [
@@ -149,9 +183,10 @@ class VendaAvulsaPainel extends Component
             ->values();
 
         return view('livewire.balcao.venda-avulsa-painel', [
-            'produtos' => $produtos,
+            'produtosPorCategoria' => $produtosPorCategoria,
+            'categoriasDisponiveis' => $categoriasDisponiveis,
             'produtoSelecionado' => $this->produtoSelecionadoId
-                ? $produtos->firstWhere('id', (int) $this->produtoSelecionadoId)
+                ? $todosOsProdutos->firstWhere('id', (int) $this->produtoSelecionadoId)
                 : null,
             'carrinhoDetalhado' => $carrinhoDetalhado,
             'carrinhoTotal' => $carrinhoDetalhado->sum('subtotal'),

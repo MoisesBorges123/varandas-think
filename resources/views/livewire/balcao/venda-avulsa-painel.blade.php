@@ -16,27 +16,52 @@
                     <h3 class="card-title">Produtos</h3>
                 </div>
                 <div class="card-body">
-                    <div class="d-flex flex-wrap" style="gap: .75rem;">
-                        @forelse ($produtos as $produto)
-                            <button
-                                type="button"
-                                wire:key="produto-avulso-{{ $produto->id }}"
-                                wire:click="selecionarProduto({{ $produto->id }})"
-                                class="btn btn-outline-primary text-left d-flex flex-column justify-content-center"
-                                style="width: 160px; height: 84px; white-space: normal;"
-                            >
-                                <span class="font-weight-bold">{{ $produto->nome }}</span>
-                                <span class="text-muted small">
-                                    {{ $produto->precoAtual ? 'R$ ' . number_format($produto->precoAtual->preco, 2, ',', '.') : 'sem preço' }}
-                                </span>
+                    <div class="row mb-3">
+                        <div class="col-7 form-group mb-0">
+                            <input type="text" wire:model.live.debounce.300ms="busca" class="form-control" placeholder="Buscar produto pelo nome...">
+                        </div>
+                        <div class="col-3 form-group mb-0">
+                            <select wire:model.live="categoriaId" class="form-control">
+                                <option value="">Todas categorias</option>
+                                @foreach ($categoriasDisponiveis as $categoria)
+                                    <option value="{{ $categoria->id }}">{{ $categoria->nome }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-2 form-group mb-0">
+                            <button type="button" wire:click="limparFiltros" class="btn btn-outline-secondary w-100" title="Limpar filtros">
+                                <i class="fe fe-x"></i>
                             </button>
-                        @empty
-                            <p class="text-muted mb-0">
-                                Nenhum produto de venda avulsa disponível. Cadastre a conversão de unidade em
-                                <a href="{{ route('cardapio.produtos.index') }}" wire:navigate>Cardápio &gt; Produtos</a>.
-                            </p>
-                        @endforelse
+                        </div>
                     </div>
+
+                    @forelse ($produtosPorCategoria as $produtosDoGrupo)
+                        <h6 class="text-muted text-uppercase small mt-3 mb-2">{{ $produtosDoGrupo->first()->categoria?->nome ?? 'Sem categoria' }}</h6>
+                        <div class="d-flex flex-wrap mb-2" style="gap: .75rem;">
+                            @foreach ($produtosDoGrupo as $produto)
+                                <button
+                                    type="button"
+                                    wire:key="produto-avulso-{{ $produto->id }}"
+                                    wire:click="selecionarProduto({{ $produto->id }})"
+                                    class="btn btn-outline-primary text-left d-flex flex-column justify-content-center"
+                                    style="width: 160px; height: 84px; white-space: normal;"
+                                >
+                                    <span class="font-weight-bold">{{ $produto->nome }}</span>
+                                    <span class="text-muted small">
+                                        {{ $produto->precoAtual ? 'R$ ' . number_format($produto->precoAtual->preco, 2, ',', '.') : 'sem preço' }}
+                                    </span>
+                                </button>
+                            @endforeach
+                        </div>
+                    @empty
+                        <p class="text-muted mb-0">
+                            Nenhum produto de venda avulsa encontrado.
+                            @if ($busca === '' && $categoriaId === '')
+                                Cadastre a conversão de unidade em
+                                <a href="{{ route('cardapio.produtos.index') }}" wire:navigate>Cardápio &gt; Produtos</a>.
+                            @endif
+                        </p>
+                    @endforelse
                 </div>
             </div>
         </div>

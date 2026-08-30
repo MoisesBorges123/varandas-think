@@ -5,6 +5,7 @@ namespace Tests\Feature\VendaAvulsa;
 use App\Enums\Cardapio\TipoProduto;
 use App\Enums\VendaAvulsa\FormaPagamentoVendaAvulsa;
 use App\Livewire\Balcao\VendaAvulsaPainel;
+use App\Models\Categoria;
 use App\Models\ConversaoProduto;
 use App\Models\GrupoEquivalencia;
 use App\Models\Ingrediente;
@@ -18,13 +19,14 @@ class VendaAvulsaPainelTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function produtoAvulsoComConversao(string $nome = 'Bala de Goma', float $preco = 1.50): Produto
+    private function produtoAvulsoComConversao(string $nome = 'Bala de Goma', float $preco = 1.50, ?Categoria $categoria = null): Produto
     {
         $grupo = GrupoEquivalencia::factory()->create();
         Ingrediente::factory()->create(['grupo_equivalencia_id' => $grupo->id]);
         $produto = Produto::factory()->comPrecoInicial($preco)->create([
             'tipo' => TipoProduto::AVULSO->value,
             'nome' => $nome,
+            'categoria_id' => $categoria?->id ?? Categoria::factory(),
         ]);
 
         ConversaoProduto::create([
@@ -49,7 +51,90 @@ class VendaAvulsaPainelTest extends TestCase
 
         Livewire::actingAs($usuario)
             ->test(VendaAvulsaPainel::class)
-            ->assertViewHas('produtos', fn ($produtos) => $produtos->count() === 1 && $produtos->first()->id === $comConversao->id);
+            ->assertViewHas('produtosPorCategoria', function ($grupos) use ($comConversao) {
+                $todos = $grupos->collapse();
+
+                return $todos->count() === 1 && $todos->first()->id === $comConversao->id;
+            });
+    }
+
+    public function test_produtos_agrupados_por_categoria(): void
+    {
+        $usuario = Usuario::factory()->create();
+        $categoriaDoces = Categoria::factory()->create(['nome' => 'Doces']);
+        $categoriaBebidas = Categoria::factory()->create(['nome' => 'Bebidas']);
+
+        $this->produtoAvulsoComConversao('Bala', 1.00, $categoriaDoces);
+        $this->produtoAvulsoComConversao('Chocolate', 2.00, $categoriaDoces);
+        $this->produtoAvulsoComConversao('Refrigerante', 5.00, $categoriaBebidas);
+
+        Livewire::actingAs($usuario)
+            ->test(VendaAvulsaPainel::class)
+            ->assertViewHas('produtosPorCategoria', function ($grupos) use ($categoriaDoces, $categoriaBebidas) {
+                return $grupos->get($categoriaDoces->id)?->count() === 2
+                    && $grupos->get($categoriaBebidas->id)?->count() === 1;
+            });
+    }
+
+    public function test_filtro_por_nome_do_produto(): void
+    {
+        $usuario = Usuario::factory()->create();
+        $bala = $this->produtoAvulsoComConversao('Bala de Goma');
+        $this->produtoAvulsoComConversao('Chocolate');
+
+        Livewire::actingAs($usuario)
+            ->test(VendaAvulsaPainel::class)
+            ->set('busca', 'goma')
+            ->assertViewHas('produtosPorCategoria', function ($grupos) use ($bala) {
+                $todos = $grupos->collapse();
+
+                return $todos->count() === 1 && $todos->first()->id === $bala->id;
+            });
+    }
+
+    public function test_filtro_por_categoria(): void
+    {
+        $usuario = Usuario::factory()->create();
+        $categoriaDoces = Categoria::factory()->create(['nome' => 'Doces']);
+        $categoriaBebidas = Categoria::factory()->create(['nome' => 'Bebidas']);
+
+        $this->produtoAvulsoComConversao('Bala', 1.00, $categoriaDoces);
+        $refrigerante = $this->produtoAvulsoComConversao('Refrigerante', 5.00, $categoriaBebidas);
+
+        Livewire::actingAs($usuario)
+            ->test(VendaAvulsaPainel::class)
+            ->set('categoriaId', (string) $categoriaBebidas->id)
+            ->assertViewHas('produtosPorCategoria', function ($grupos) use ($refrigerante) {
+                $todos = $grupos->collapse();
+
+                return $todos->count() === 1 && $todos->first()->id === $refrigerante->id;
+            });
+    }
+
+    public function test_carrinho_continua_valido_mesmo_apos_filtrar_produto_pra_fora_da_lista(): void
+    {
+        $usuario = Usuario::factory()->create();
+        $bala = $this->produtoAvulsoComConversao('Bala de Goma');
+
+        Livewire::actingAs($usuario)
+            ->test(VendaAvulsaPainel::class)
+            ->call('selecionarProduto', $bala->id)
+            ->call('adicionarAoCarrinho')
+            ->set('busca', 'termo que não bate com nada')
+            ->assertViewHas('carrinhoDetalhado', fn ($carrinho) => $carrinho->first()['nome'] === 'Bala de Goma');
+    }
+
+    public function test_limpar_filtros_reseta_busca_e_categoria(): void
+    {
+        $usuario = Usuario::factory()->create();
+
+        Livewire::actingAs($usuario)
+            ->test(VendaAvulsaPainel::class)
+            ->set('busca', 'algo')
+            ->set('categoriaId', '1')
+            ->call('limparFiltros')
+            ->assertSet('busca', '')
+            ->assertSet('categoriaId', '');
     }
 
     public function test_selecionar_produto_seta_estado(): void
