@@ -23,6 +23,7 @@ class ProdutoFactory extends Factory
             'ativo' => true,
             'disponivel' => true,
             'valida_estoque_automatico' => true,
+            'em_promocao' => false,
         ];
     }
 

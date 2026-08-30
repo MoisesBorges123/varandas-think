@@ -7,6 +7,7 @@ use App\Enums\Pedido\StatusItemPedido;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ItemPedido extends Model
@@ -77,6 +78,11 @@ class ItemPedido extends Model
     public function lancadoPor(): BelongsTo
     {
         return $this->belongsTo(Usuario::class, 'lancado_por');
+    }
+
+    public function avaliacao(): HasOne
+    {
+        return $this->hasOne(AvaliacaoProduto::class);
     }
 
     public function estaPendenteAprovacao(): bool

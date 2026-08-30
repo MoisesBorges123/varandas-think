@@ -17,13 +17,14 @@ RUN apt-get update && apt-get install -y \
     unzip \
     libfreetype6-dev \
     libjpeg62-turbo-dev \
+    libwebp-dev \
     libpq-dev \
     libicu-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 # Instalar extensões PHP necessárias
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
     && docker-php-ext-install -j$(nproc) \
     pdo_mysql \
     mbstring \

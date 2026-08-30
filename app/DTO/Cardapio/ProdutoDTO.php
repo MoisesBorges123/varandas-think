@@ -19,6 +19,8 @@ class ProdutoDTO extends DTOBase
 
     private bool $validaEstoqueAutomatico = true;
 
+    private bool $emPromocao = false;
+
     private ?int $createdBy = null;
 
     public function setCategoriaId(?int $categoriaId): self
@@ -78,6 +80,13 @@ class ProdutoDTO extends DTOBase
         return $this;
     }
 
+    public function setEmPromocao(bool $emPromocao): self
+    {
+        $this->emPromocao = $emPromocao;
+
+        return $this;
+    }
+
     public function setCreatedBy(?int $createdBy): self
     {
         $this->createdBy = $createdBy;
@@ -94,6 +103,7 @@ class ProdutoDTO extends DTOBase
             'ativo' => $this->ativo,
             'disponivel' => $this->disponivel,
             'valida_estoque_automatico' => $this->validaEstoqueAutomatico,
+            'em_promocao' => $this->emPromocao,
             'created_by' => $this->createdBy,
         ], fn ($valor) => $valor !== null);
     }
@@ -116,6 +126,7 @@ class ProdutoDTO extends DTOBase
             ->setAtivo((bool) $componente->ativo)
             ->setDisponivel((bool) $componente->disponivel)
             ->setValidaEstoqueAutomatico((bool) $componente->validaEstoqueAutomatico)
+            ->setEmPromocao((bool) $componente->emPromocao)
             ->setCreatedBy(auth()->id());
     }
 }

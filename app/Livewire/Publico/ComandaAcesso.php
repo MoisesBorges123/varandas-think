@@ -2,10 +2,13 @@
 
 namespace App\Livewire\Publico;
 
+use App\DTO\Cardapio\AvaliarProdutoDTO;
 use App\DTO\Pedido\AdicionarItemPedidoDTO;
+use App\Enums\Cardapio\TipoProduto;
 use App\Exceptions\EstoqueProvavelmenteIndisponivelException;
 use App\Models\Comanda;
 use App\Models\Produto;
+use App\Services\Cardapio\AvaliacaoProdutoService;
 use App\Services\ComandaService;
 use App\Services\GeolocalizacaoService;
 use App\Services\Pedido\ItemPedidoService;
@@ -21,6 +24,9 @@ use Livewire\Component;
 #[Layout('components.layouts.cliente')]
 class ComandaAcesso extends Component
 {
+    /** Relações padrão da comanda carregadas em todo load/refresh desta tela. */
+    private const RELACOES_COMANDA = ['mesa', 'itensPedido.produto', 'itensPedido.avaliacao'];
+
     public string $token = '';
 
     public bool $verificado = false;
@@ -39,6 +45,9 @@ class ComandaAcesso extends Component
 
     public bool $estoqueDuvidoso = false;
 
+    /** Produto em destaque no overlay de detalhe/promoção (CLAUDE.md — feature de catálogo visual). */
+    public ?int $produtoDetalheId = null;
+
     public function mount(string $token): void
     {
         $this->token = $token;
@@ -52,7 +61,7 @@ class ComandaAcesso extends Component
             && $comanda->estaAberta()
             && $geo->estaDentroDoRaio($lat, $lng);
 
-        $this->comanda = $this->liberado ? $comanda->load(['mesa', 'itensPedido.produto']) : null;
+        $this->comanda = $this->liberado ? $comanda->load(self::RELACOES_COMANDA) : null;
         $this->verificado = true;
     }
 
@@ -110,7 +119,46 @@ class ComandaAcesso extends Component
             return;
         }
 
-        $this->comanda = $this->comanda->fresh(['mesa', 'itensPedido.produto']);
+        $this->comanda = $this->comanda->fresh(self::RELACOES_COMANDA);
+    }
+
+    /**
+     * Abre o overlay de detalhe/galeria de um produto — usado tanto pelo
+     * banner de promoção quanto pelo clique num card do catálogo. Fica
+     * dentro do mesmo componente (não uma rota nova) pra não precisar
+     * reverificar geolocalização/token só pra ver fotos.
+     */
+    public function abrirDetalhe(int $produtoId): void
+    {
+        $this->produtoDetalheId = $produtoId;
+        $this->produtoSelecionadoId = (string) $produtoId;
+    }
+
+    public function fecharDetalhe(): void
+    {
+        $this->produtoDetalheId = null;
+    }
+
+    /**
+     * Cliente avalia (1 a 5 estrelas) um prato que já recebeu. O cliente
+     * nunca vê a lista de avaliações de outros — só a média agregada,
+     * calculada no render() a partir do produto.
+     */
+    public function avaliar(int $itemPedidoId, int $nota, AvaliacaoProdutoService $service): void
+    {
+        try {
+            $dto = (new AvaliarProdutoDTO())
+                ->setItemPedidoId($itemPedidoId)
+                ->setNota($nota);
+
+            $service->avaliar($dto);
+
+            $this->comanda = $this->comanda->fresh(self::RELACOES_COMANDA);
+
+            $this->dispatch('toastr', message: 'Obrigado pela avaliação!', type: 'success', title: 'Pronto');
+        } catch (\Exception $e) {
+            $this->dispatch('toastr', message: $e->getMessage(), type: 'error', title: 'Não foi possível avaliar');
+        }
     }
 
     private function enviarPedido(ItemPedidoService $itemPedidoService, bool $confirmarComAviso): void
@@ -126,8 +174,9 @@ class ComandaAcesso extends Component
 
             $this->produtoSelecionadoId = '';
             $this->quantidade = '1';
+            $this->produtoDetalheId = null;
 
-            $this->comanda = $this->comanda->fresh(['mesa', 'itensPedido.produto']);
+            $this->comanda = $this->comanda->fresh(self::RELACOES_COMANDA);
 
             $this->dispatch('toastr', message: 'Pedido enviado! Aguardando confirmação do garçom.', type: 'success', title: 'Pronto');
         } catch (EstoqueProvavelmenteIndisponivelException) {
@@ -137,14 +186,30 @@ class ComandaAcesso extends Component
         }
     }
 
-    public function render()
+    public function render(AvaliacaoProdutoService $avaliacaoService)
     {
+        // CLAUDE.md seção 3.2: venda avulsa de balcão é um fluxo separado,
+        // nunca deveria aparecer no catálogo do cliente via QR code.
+        $produtos = Produto::query()
+            ->where('ativo', true)
+            ->where('disponivel', true)
+            ->where('tipo', TipoProduto::PREPARADO->value)
+            ->with(['fotos', 'precoAtual'])
+            ->orderBy('nome')
+            ->get();
+
+        $mediaPorProduto = $avaliacaoService->mediaEQuantidadePorProdutos($produtos->pluck('id')->all());
+
+        $produtoDetalhe = $this->produtoDetalheId
+            ? $produtos->firstWhere('id', $this->produtoDetalheId)
+            : null;
+
         return view('livewire.publico.comanda-acesso', [
-            'produtos' => Produto::query()
-                ->where('ativo', true)
-                ->where('disponivel', true)
-                ->orderBy('nome')
-                ->get(),
+            'produtos' => $produtos,
+            'produtosEmPromocao' => $produtos->where('em_promocao', true)->values(),
+            'mediaPorProduto' => $mediaPorProduto,
+            'produtoDetalhe' => $produtoDetalhe,
+            'mediaAvaliacoesDetalhe' => $produtoDetalhe ? ($mediaPorProduto[$produtoDetalhe->id] ?? ['media' => 0.0, 'quantidade' => 0]) : null,
         ]);
     }
 }
