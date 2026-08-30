@@ -26,6 +26,8 @@ class AbrirComandaDTO extends DTOBase
 
     private ?string $clienteTelefone = null;
 
+    private ?string $clienteEmail = null;
+
     public function setMesaId(?int $mesaId): self
     {
         $this->mesaId = $mesaId;
@@ -98,6 +100,18 @@ class AbrirComandaDTO extends DTOBase
         return $this->clienteTelefone;
     }
 
+    public function setClienteEmail(?string $clienteEmail): self
+    {
+        $this->clienteEmail = $clienteEmail;
+
+        return $this;
+    }
+
+    public function getClienteEmail(): ?string
+    {
+        return $this->clienteEmail;
+    }
+
     public function toArray(): array
     {
         return [
@@ -107,6 +121,7 @@ class AbrirComandaDTO extends DTOBase
             'cliente_nome' => $this->clienteNome,
             'cliente_cpf' => $this->clienteCpf,
             'cliente_telefone' => $this->clienteTelefone,
+            'cliente_email' => $this->clienteEmail,
         ];
     }
 
@@ -125,7 +140,8 @@ class AbrirComandaDTO extends DTOBase
             ->setTipo(TipoComanda::from($componente->tipo))
             ->setGarcomId($componente->garcomId !== '' && $componente->garcomId !== null ? (int) $componente->garcomId : null)
             ->setClienteNome($componente->clienteNome ?: null)
-            ->setClienteCpf($componente->clienteCpf ?: null)
-            ->setClienteTelefone($componente->clienteTelefone ?: null);
+            ->setClienteCpf(($componente->clienteCpf ?? null) ?: null)
+            ->setClienteTelefone($componente->clienteTelefone ?: null)
+            ->setClienteEmail(($componente->clienteEmail ?? null) ?: null);
     }
 }

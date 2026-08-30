@@ -24,6 +24,7 @@ class Comanda extends Model
         'cliente_nome',
         'cliente_cpf',
         'cliente_telefone',
+        'cliente_email',
         'aberta_em',
         'fechada_em',
     ];

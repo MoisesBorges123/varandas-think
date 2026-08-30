@@ -73,9 +73,7 @@ class AcessoPublicoComandaTest extends TestCase
 
         Livewire::test(MesaAcesso::class, ['token' => $mesa->token])
             ->set('clienteNome', 'João')
-            ->set('clienteCpf', '111.111.111-11')
             ->set('clienteTelefone', '11999999999')
-            ->set('tipo', 'individual')
             ->call('abrirComanda', -23.9, -46.9) // bem longe do raio configurado
             ->assertSet('foraDoRaio', true);
 
@@ -89,9 +87,7 @@ class AcessoPublicoComandaTest extends TestCase
 
         Livewire::test(MesaAcesso::class, ['token' => $mesa->token])
             ->set('clienteNome', 'João')
-            ->set('clienteCpf', '111.111.111-11')
             ->set('clienteTelefone', '11999999999')
-            ->set('tipo', 'individual')
             ->call('abrirComanda', -23.5505, -46.6333);
 
         $this->assertDatabaseCount('comandas', 1);

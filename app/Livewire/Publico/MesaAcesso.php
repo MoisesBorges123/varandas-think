@@ -30,11 +30,11 @@ class MesaAcesso extends Component
     #[Validate('required|string|max:100')]
     public string $clienteNome = '';
 
-    #[Validate('required|string|max:14')]
-    public string $clienteCpf = '';
-
     #[Validate('required|string|max:20')]
     public string $clienteTelefone = '';
+
+    #[Validate('nullable|email|max:150')]
+    public string $clienteEmail = '';
 
     public string $tipo = '';
 

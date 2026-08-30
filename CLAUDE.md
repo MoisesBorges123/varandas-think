@@ -175,7 +175,9 @@ perfil de usuário.
 
 - **Duas formas de abrir**: o garçom abre diretamente, OU o cliente abre a
   própria comanda escaneando um **QR code na mesa**, se identificando com
-  **nome, CPF e telefone**.
+  **nome e telefone (obrigatórios) + e-mail (opcional)**. CPF não é mais
+  coletado nesse fluxo (decisão revisada — simplificar a abertura pelo
+  cliente).
 - A comanda é uma **sessão contínua**: fica aberta enquanto o cliente estiver
   na mesa, e só se encerra por ação explícita — o cliente pedindo para
   fechar pelo celular, ou o garçom fechando manualmente. **Comanda pode

@@ -18,14 +18,6 @@
         </div>
 
         <div class="form-group">
-            <label>CPF</label>
-            <input type="text" wire:model="clienteCpf" class="form-control" placeholder="000.000.000-00">
-            @error('clienteCpf')
-                <div class="text-danger small mt-1">{{ $message }}</div>
-            @enderror
-        </div>
-
-        <div class="form-group">
             <label>Telefone</label>
             <input type="text" wire:model="clienteTelefone" class="form-control" placeholder="(00) 00000-0000">
             @error('clienteTelefone')
@@ -34,15 +26,11 @@
         </div>
 
         <div class="form-group">
-            <label>Como vai ser a comanda?</label>
-            <div class="custom-control custom-radio">
-                <input type="radio" id="tipo-individual" value="individual" wire:model="tipo" class="custom-control-input">
-                <label class="custom-control-label" for="tipo-individual">Só minha (individual)</label>
-            </div>
-            <div class="custom-control custom-radio">
-                <input type="radio" id="tipo-compartilhada" value="compartilhada" wire:model="tipo" class="custom-control-input">
-                <label class="custom-control-label" for="tipo-compartilhada">Vamos dividir com a mesa (compartilhada)</label>
-            </div>
+            <label>E-mail <span class="text-muted">(opcional)</span></label>
+            <input type="email" wire:model="clienteEmail" class="form-control" placeholder="voce@email.com">
+            @error('clienteEmail')
+                <div class="text-danger small mt-1">{{ $message }}</div>
+            @enderror
         </div>
 
         <button type="submit" id="btn-abrir-comanda" class="btn btn-primary btn-block" wire:loading.attr="disabled" wire:target="abrirComanda">
