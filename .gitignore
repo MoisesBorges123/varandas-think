@@ -17,7 +17,7 @@ yarn-error.log
 /.fleet
 /.idea
 /.vscode
-
+*.zip
 # Docker
 /docker/mysql/data
 
