@@ -101,17 +101,24 @@ jobs:
             set -e
             cd "${{ secrets.DEPLOY_PATH }}"
 
+            # O `php` padrão do PATH nesse servidor é 7.4 (CloudLinux
+            # alt-php) — o hPanel só controla a versão usada pelo Apache
+            # pra servir o site, não a do terminal SSH. O projeto exige
+            # 8.2+ (enums, readonly properties), por isso o caminho
+            # explícito abaixo.
+            PHP=/opt/alt/php82/usr/bin/php
+
             # Garante que as pastas que ficam de fora do rsync existem
             # (primeira vez) e têm permissão de escrita.
             mkdir -p storage/framework/{cache/data,sessions,testing,views} storage/logs storage/app/public bootstrap/cache
             chmod -R 775 storage bootstrap/cache
 
-            php artisan down --render="errors::503" || true
+            $PHP artisan down --render="errors::503" || true
 
-            php artisan migrate --force
-            php artisan storage:link || true
-            php artisan config:cache
-            php artisan route:cache
-            php artisan view:cache
+            $PHP artisan migrate --force
+            $PHP artisan storage:link || true
+            $PHP artisan config:cache
+            $PHP artisan route:cache
+            $PHP artisan view:cache
 
-            php artisan up
+            $PHP artisan up
