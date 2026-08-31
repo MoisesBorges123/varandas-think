@@ -4,6 +4,8 @@ namespace App\Livewire\Comanda;
 
 use App\DTO\Comanda\ConfiguracaoDTO;
 use App\Services\ConfiguracaoService;
+use App\Services\Pagamento\Gateway\MercadoPagoGatewayInterface;
+use Illuminate\Http\Client\RequestException;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
 
@@ -30,6 +32,15 @@ class ConfiguracaoForm extends Component
 
     public string $mpDeviceIdPortatil = '';
 
+    /** @var array<int, array{id: string, pos_id: ?int, store_id: ?int, operating_mode: ?string}> */
+    public array $terminaisDisponiveis = [];
+
+    public bool $buscandoTerminais = false;
+
+    public bool $jaBuscouTerminais = false;
+
+    public ?string $erroTerminais = null;
+
     public function mount(ConfiguracaoService $service): void
     {
         $configuracao = $service->obter();
@@ -45,6 +56,39 @@ class ConfiguracaoForm extends Component
             $this->mpDeviceIdBalcao = (string) ($configuracao->mp_device_id_balcao ?? '');
             $this->mpDeviceIdPortatil = (string) ($configuracao->mp_device_id_portatil ?? '');
         }
+    }
+
+    /**
+     * Busca os terminais Point vinculados à conta configurada
+     * (CLAUDE.md seção 6) — chamada real à API do Mercado Pago, então
+     * nunca deixa quebrar a tela: sem credencial configurada ou com a
+     * API fora do ar, só mostra um aviso e mantém os campos manuais
+     * funcionando normalmente.
+     */
+    public function atualizarTerminais(MercadoPagoGatewayInterface $gateway): void
+    {
+        $this->buscandoTerminais = true;
+        $this->erroTerminais = null;
+
+        try {
+            $this->terminaisDisponiveis = $gateway->listarTerminais();
+        } catch (RequestException|\Throwable $e) {
+            $this->terminaisDisponiveis = [];
+            $this->erroTerminais = 'Não foi possível consultar as maquininhas agora. Você ainda pode preencher o identificador manualmente.';
+        } finally {
+            $this->buscandoTerminais = false;
+            $this->jaBuscouTerminais = true;
+        }
+    }
+
+    public function selecionarTerminalBalcao(string $terminalId): void
+    {
+        $this->mpDeviceIdBalcao = $terminalId;
+    }
+
+    public function selecionarTerminalPortatil(string $terminalId): void
+    {
+        $this->mpDeviceIdPortatil = $terminalId;
     }
 
     public function salvar(ConfiguracaoService $service): void

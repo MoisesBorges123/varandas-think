@@ -95,18 +95,57 @@
         </div>
 
         <div class="row">
-            <div class="col-md-6">
+            <div class="col-md-8">
                 <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title">Maquininhas Mercado Pago</h3>
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h3 class="card-title mb-0">Maquininhas Mercado Pago</h3>
+                        <button type="button" wire:click="atualizarTerminais" wire:loading.attr="disabled" wire:target="atualizarTerminais" class="btn btn-sm btn-outline-primary">
+                            <span wire:loading.remove wire:target="atualizarTerminais"><i class="fe fe-refresh-cw mr-1"></i> Buscar maquininhas vinculadas</span>
+                            <span wire:loading wire:target="atualizarTerminais">Buscando...</span>
+                        </button>
                     </div>
                     <div class="card-body">
                         <p class="text-muted">
                             Identificador (device_id/terminal_id) dos terminais Point vinculados à conta
-                            Mercado Pago (CLAUDE.md seção 6). Consulte em
-                            <code>GET /terminals/v1/list</code> na conta configurada — sem isso, a forma de
-                            pagamento correspondente fica desabilitada na tela de pagamento.
+                            Mercado Pago (CLAUDE.md seção 6) — sem isso, a forma de pagamento correspondente
+                            fica desabilitada na tela de pagamento.
                         </p>
+
+                        @if ($erroTerminais)
+                            <div class="alert alert-warning">{{ $erroTerminais }}</div>
+                        @endif
+
+                        @if ($jaBuscouTerminais && ! $erroTerminais)
+                            <div class="mb-3">
+                                @forelse ($terminaisDisponiveis as $terminal)
+                                    <div class="d-flex justify-content-between align-items-center border rounded p-2 mb-2" wire:key="terminal-{{ $terminal['id'] }}">
+                                        <div>
+                                            <div class="font-weight-bold">{{ $terminal['id'] }}</div>
+                                            <div class="text-muted small">
+                                                @if ($terminal['operating_mode'])
+                                                    {{ $terminal['operating_mode'] }}
+                                                @endif
+                                                @if ($terminal['pos_id'])
+                                                    · POS {{ $terminal['pos_id'] }}
+                                                @endif
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <button type="button" wire:click="selecionarTerminalBalcao('{{ $terminal['id'] }}')" class="btn btn-sm btn-outline-secondary">Usar como balcão</button>
+                                            <button type="button" wire:click="selecionarTerminalPortatil('{{ $terminal['id'] }}')" class="btn btn-sm btn-outline-secondary">Usar como portátil</button>
+                                        </div>
+                                    </div>
+                                @empty
+                                    <p class="text-muted small mb-0" id="nenhuma-maquininha-encontrada">
+                                        Nenhuma maquininha encontrada na conta ainda. Isso é esperado até você
+                                        emparelhar um terminal físico ou portátil pelo app Point da Mercado
+                                        Pago — a lista aqui só reflete terminais já emparelhados, não cria um
+                                        pareamento novo. Enquanto isso, preencha o identificador manualmente
+                                        abaixo se já souber qual é.
+                                    </p>
+                                @endforelse
+                            </div>
+                        @endif
 
                         <div class="form-group">
                             <label>Maquininha do balcão (API Point)</label>

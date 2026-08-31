@@ -43,4 +43,16 @@ interface MercadoPagoGatewayInterface
     public function consultarStatusOrdemPoint(string $mpOrderId): string;
 
     public function estornarPagamento(string $mpPaymentId): bool;
+
+    /**
+     * Lista os terminais Point vinculados à conta (CLAUDE.md seção 6) —
+     * alimenta a tela de Configurações pra o dono apontar qual é a
+     * maquininha do balcão e qual é a portátil, sem precisar descobrir o
+     * device_id manualmente. Terminal só aparece aqui depois de
+     * emparelhado fisicamente via o app Point da Mercado Pago — a API
+     * não cria/registra o pareamento, só lista o que já existe.
+     *
+     * @return array<int, array{id: string, pos_id: ?int, store_id: ?int, operating_mode: ?string}>
+     */
+    public function listarTerminais(): array;
 }

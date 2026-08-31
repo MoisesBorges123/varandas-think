@@ -127,6 +127,20 @@ class MercadoPagoGateway implements MercadoPagoGatewayInterface
         return $resposta->successful();
     }
 
+    public function listarTerminais(): array
+    {
+        $dados = $this->get('/terminals/v1/list', contexto: ['operacao' => 'listarTerminais']);
+
+        return collect($dados['data']['terminals'] ?? [])
+            ->map(fn (array $terminal) => [
+                'id' => (string) $terminal['id'],
+                'pos_id' => $terminal['pos_id'] ?? null,
+                'store_id' => $terminal['store_id'] ?? null,
+                'operating_mode' => $terminal['operating_mode'] ?? null,
+            ])
+            ->all();
+    }
+
     /**
      * @return array<string, mixed>
      */

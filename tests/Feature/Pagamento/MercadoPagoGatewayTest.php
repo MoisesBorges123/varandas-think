@@ -80,6 +80,37 @@ class MercadoPagoGatewayTest extends TestCase
         });
     }
 
+    public function test_listar_terminais_com_resultados(): void
+    {
+        // Formato real confirmado contra a API de sandbox (agosto/2026):
+        // { "data": { "terminals": [...] }, "paging": {...} }.
+        Http::fake([
+            'api.mercadopago.com/terminals/v1/list' => Http::response([
+                'data' => [
+                    'terminals' => [
+                        ['id' => 'NEWLAND_N950__N950NCB801293324', 'pos_id' => 123, 'store_id' => 1, 'operating_mode' => 'PDV'],
+                    ],
+                ],
+                'paging' => ['total' => 1, 'limit' => 50, 'offset' => 0],
+            ], 200),
+        ]);
+
+        $terminais = $this->gateway()->listarTerminais();
+
+        $this->assertCount(1, $terminais);
+        $this->assertSame('NEWLAND_N950__N950NCB801293324', $terminais[0]['id']);
+        $this->assertSame(123, $terminais[0]['pos_id']);
+    }
+
+    public function test_listar_terminais_vazio_nao_da_erro(): void
+    {
+        Http::fake([
+            'api.mercadopago.com/terminals/v1/list' => Http::response(['data' => ['terminals' => []], 'paging' => ['total' => 0]], 200),
+        ]);
+
+        $this->assertSame([], $this->gateway()->listarTerminais());
+    }
+
     public function test_consultar_status_pagamento_mapeia_approved_para_confirmado(): void
     {
         Http::fake(['api.mercadopago.com/v1/payments/*' => Http::response(['status' => 'approved'], 200)]);
