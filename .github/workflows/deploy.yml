@@ -43,9 +43,15 @@ jobs:
       - name: Gerar APP_KEY de build
         run: php artisan key:generate --ansi
 
+      # npm ci em vez de npm install aqui esbarra num bug conhecido do
+      # npm com dependências opcionais de plataforma (o binário nativo
+      # do Rollup não é instalado mesmo listado no lockfile —
+      # https://github.com/npm/cli/issues/4828). npm install ainda
+      # respeita o package-lock.json pra resolução de versões, só usa um
+      # algoritmo de instalação mais tolerante que não bate nesse bug.
       - name: Instalar dependências do NPM e compilar assets
         run: |
-          npm ci
+          npm install
           npm run build
 
       - name: Carregar chave SSH
