@@ -39,7 +39,7 @@ return [
         'access_token' => env('MP_ACCESS_TOKEN'),
         'public_key' => env('MP_PUBLIC_KEY'),
         'webhook_secret' => env('MP_WEBHOOK_SECRET'),
-        'notification_url' => env('MP_NOTIFICATION_URL'),
+        'email_pagador_padrao' => env('MP_EMAIL_PAGADOR_PADRAO'),
     ],
 
 ];

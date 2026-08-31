@@ -39,7 +39,7 @@ class MercadoPagoWebhookControllerTest extends TestCase
     public function test_assinatura_valida_processa_o_webhook(): void
     {
         $this->mock(MercadoPagoGatewayInterface::class, function ($mock) {
-            $mock->shouldReceive('consultarStatusPagamento')
+            $mock->shouldReceive('consultarStatusOrdemPoint')
                 ->once()
                 ->with('mp-abc')
                 ->andReturn(StatusPagamento::CONFIRMADO->value);

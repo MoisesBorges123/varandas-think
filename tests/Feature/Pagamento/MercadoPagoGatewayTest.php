@@ -13,34 +13,53 @@ class MercadoPagoGatewayTest extends TestCase
 {
     private const TOKEN_FAKE_NAO_REAL = 'token-fake-para-teste-000';
 
-    private function gateway(?string $notificationUrl = 'https://varandasbar.com.br/webhooks/mercadopago'): MercadoPagoGateway
+    private function gateway(): MercadoPagoGateway
     {
-        return new MercadoPagoGateway(self::TOKEN_FAKE_NAO_REAL, $notificationUrl);
+        return new MercadoPagoGateway(self::TOKEN_FAKE_NAO_REAL);
     }
 
-    public function test_gerar_pix_dinamico_envia_payload_correto_e_idempotency_key(): void
+    /**
+     * Regressão real: Pix criado via `/v1/payments` (Payments API
+     * clássica) retorna 401 "Unauthorized use of live credentials" com
+     * token de teste (confirmado contra o sandbox e contra a doc oficial
+     * checkout-api-orders/integration-test/pix, agosto/2026). Pix precisa
+     * passar pela Orders API (`/v1/orders`, `type=online`), igual ao
+     * fluxo de maquininha.
+     */
+    public function test_gerar_pix_dinamico_envia_payload_de_orders_api_e_idempotency_key(): void
     {
         Http::fake([
-            'api.mercadopago.com/v1/payments' => Http::response([
-                'id' => 999,
-                'status' => 'pending',
-                'point_of_interaction' => [
-                    'transaction_data' => ['qr_code' => 'copia-cola', 'qr_code_base64' => 'imagem-base64'],
+            'api.mercadopago.com/v1/orders' => Http::response([
+                'id' => 'order-pix-999',
+                'status' => 'action_required',
+                'transactions' => [
+                    'payments' => [
+                        [
+                            'payment_method' => [
+                                'id' => 'pix',
+                                'type' => 'bank_transfer',
+                                'qr_code' => 'copia-cola',
+                                'qr_code_base64' => 'imagem-base64',
+                            ],
+                        ],
+                    ],
                 ],
             ], 201),
         ]);
 
         $resultado = $this->gateway()->gerarPixDinamico(19.90, 'ref-abc', 'cliente@exemplo.com');
 
-        $this->assertSame('999', $resultado->mpId);
+        $this->assertSame('order-pix-999', $resultado->mpId);
         $this->assertSame(StatusPagamento::PENDENTE->value, $resultado->status);
         $this->assertSame('copia-cola', $resultado->qrCode);
         $this->assertSame('imagem-base64', $resultado->qrCodeBase64);
 
         Http::assertSent(function ($request) {
-            return $request->url() === 'https://api.mercadopago.com/v1/payments'
-                && $request['payment_method_id'] === 'pix'
-                && $request['transaction_amount'] === 19.9
+            return $request->url() === 'https://api.mercadopago.com/v1/orders'
+                && $request['type'] === 'online'
+                && $request['processing_mode'] === 'automatic'
+                && $request['total_amount'] === '19.90'
+                && $request['transactions']['payments'][0]['payment_method'] === ['id' => 'pix', 'type' => 'bank_transfer']
                 && $request['payer']['email'] === 'cliente@exemplo.com'
                 && $request['external_reference'] === 'ref-abc'
                 && $request->hasHeader('X-Idempotency-Key', 'ref-abc')
@@ -48,34 +67,10 @@ class MercadoPagoGatewayTest extends TestCase
         });
     }
 
-    public function test_notification_url_publica_e_enviada(): void
-    {
-        Http::fake(['api.mercadopago.com/*' => Http::response(['id' => 1, 'status' => 'pending'], 201)]);
-
-        $this->gateway('https://varandasbar.com.br/webhooks/mercadopago')->gerarPixDinamico(10.00, 'ref-1');
-
-        Http::assertSent(fn ($request) => $request['notification_url'] === 'https://varandasbar.com.br/webhooks/mercadopago');
-    }
-
-    /**
-     * Regressão real: a MP rejeita a criação do pagamento inteiro (400)
-     * quando notification_url aponta pra localhost — "notificaction_url
-     * attribute must be url valid" (confirmado contra o sandbox,
-     * agosto/2026, antes do domínio de produção existir).
-     */
-    public function test_notification_url_localhost_e_omitida(): void
-    {
-        Http::fake(['api.mercadopago.com/*' => Http::response(['id' => 1, 'status' => 'pending'], 201)]);
-
-        $this->gateway('http://localhost:8000/webhooks/mercadopago')->gerarPixDinamico(10.00, 'ref-2');
-
-        Http::assertSent(fn ($request) => ! array_key_exists('notification_url', $request->data()));
-    }
-
     public function test_gerar_pix_dinamico_sem_email_do_cliente_usa_fallback(): void
     {
         Http::fake([
-            'api.mercadopago.com/*' => Http::response(['id' => 1, 'status' => 'pending'], 201),
+            'api.mercadopago.com/v1/orders' => Http::response(['id' => 'order-1', 'status' => 'action_required'], 201),
         ]);
 
         $this->gateway()->gerarPixDinamico(10.00, 'ref-sem-email');
@@ -83,6 +78,25 @@ class MercadoPagoGatewayTest extends TestCase
         // .local é um TLD reservado (RFC 6762) e a MP rejeita como
         // e-mail inválido — regressão real encontrada em teste manual.
         Http::assertSent(fn ($request) => $request['payer']['email'] === 'comanda@varandasbar.com.br');
+    }
+
+    /**
+     * Regressão real: em sandbox, a Orders API rejeita qualquer e-mail
+     * que não termine em "@testuser.com" com `invalid_email_for_sandbox`
+     * (confirmado contra o sandbox, agosto/2026). O fallback padrão do
+     * código não serve pra isso, então precisa ser configurável via
+     * `MP_EMAIL_PAGADOR_PADRAO`.
+     */
+    public function test_gerar_pix_dinamico_sem_email_do_cliente_usa_fallback_configurado(): void
+    {
+        Http::fake([
+            'api.mercadopago.com/v1/orders' => Http::response(['id' => 'order-1', 'status' => 'action_required'], 201),
+        ]);
+
+        (new MercadoPagoGateway(self::TOKEN_FAKE_NAO_REAL, 'test_user_123@testuser.com'))
+            ->gerarPixDinamico(10.00, 'ref-sem-email');
+
+        Http::assertSent(fn ($request) => $request['payer']['email'] === 'test_user_123@testuser.com');
     }
 
     public function test_cobrar_via_maquininha_envia_payload_de_orders_api(): void
@@ -154,7 +168,7 @@ class MercadoPagoGatewayTest extends TestCase
         Log::spy();
 
         Http::fake([
-            'api.mercadopago.com/v1/payments' => Http::response(['message' => 'cause detalhado da mp'], 400),
+            'api.mercadopago.com/v1/orders' => Http::response(['message' => 'cause detalhado da mp'], 400),
         ]);
 
         try {

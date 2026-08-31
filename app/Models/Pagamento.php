@@ -65,12 +65,12 @@ class Pagamento extends Model
     }
 
     /**
-     * api_point/celular_aproximacao usam a Orders API (recurso "order");
-     * pix_celular/pix_qrcode_impresso usam a Payments API clássica
-     * (recurso "payment") — o gateway precisa saber qual consultar.
+     * Toda forma de pagamento com gateway por trás (maquininha e Pix)
+     * usa a Orders API (recurso "order") — só `dinheiro` não passa pelo
+     * gateway (confirma direto, sem `mp_payment_id`).
      */
     public function usaOrdersApi(): bool
     {
-        return $this->forma_pagamento->precisaDeTerminal();
+        return $this->forma_pagamento !== FormaPagamento::DINHEIRO;
     }
 }

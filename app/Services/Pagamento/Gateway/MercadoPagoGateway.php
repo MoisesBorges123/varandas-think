@@ -17,14 +17,16 @@ use Illuminate\Support\Str;
  * Http também deixa os testes simples com Http::fake(), sem precisar de
  * credencial real).
  *
- * Point (maquininha) usa a Orders API (`POST /v1/orders`, type=point) —
- * NÃO a Point Integration API legada (`point/integration-api/.../payment-intents`),
- * que a própria Mercado Pago já sinaliza como em substituição (confirmado
- * em pesquisa de agosto/2026, doc de migração:
- * mercadopago.com.br/developers/pt/docs/mp-point/migrate-payment-intent-to-orders).
- * Pix usa a Payments API clássica (`POST /v1/payments`), mais simples e
- * suficiente pro caso de uso (não precisamos de múltiplos meios de
- * pagamento numa mesma order).
+ * Point (maquininha) E Pix usam ambos a Orders API (`POST /v1/orders`,
+ * `type=point` e `type=online` respectivamente) — NÃO a Point Integration
+ * API legada nem a Payments API clássica (`POST /v1/payments`). Pix
+ * chegou a ser implementado via Payments API, mas isso quebra em
+ * ambiente de teste: a MP responde 401 "Unauthorized use of live
+ * credentials" (code 7) pra qualquer chamada de `/v1/payments` com Pix
+ * usando token de teste (confirmado contra o sandbox e contra a doc
+ * oficial, agosto/2026 — checkout-api-orders/integration-test/pix diz
+ * explicitamente que o teste de Pix precisa passar pela Orders API).
+ * Corrigido migrando Pix pra Orders API também.
  */
 class MercadoPagoGateway implements MercadoPagoGatewayInterface
 {
@@ -33,16 +35,24 @@ class MercadoPagoGateway implements MercadoPagoGatewayInterface
     private const TIMEOUT_SEGUNDOS = 15;
 
     /**
-     * E-mail usado quando o cliente não informou um ao abrir a comanda.
-     * Precisa de um TLD público de verdade — `.local` é reservado
-     * (RFC 6762) e a validação da MP rejeita com "payer.email must be a
-     * valid email" (confirmado em teste real, agosto/2026).
+     * E-mail usado quando o cliente não informou um ao abrir a comanda,
+     * se nenhum `MP_EMAIL_PAGADOR_PADRAO` estiver configurado. Precisa de
+     * um TLD público de verdade — `.local` é reservado (RFC 6762) e a
+     * validação da MP rejeita com "payer.email must be a valid email"
+     * (confirmado em teste real, agosto/2026).
+     *
+     * Em ambiente de sandbox, a Orders API só aceita e-mail terminado em
+     * `@testuser.com` (erro `invalid_email_for_sandbox` caso contrário —
+     * confirmado em teste real, agosto/2026); em produção essa restrição
+     * não existe. Por isso o valor é configurável via `MP_EMAIL_PAGADOR_PADRAO`
+     * — em teste, aponte pro e-mail do usuário de teste comprador; em
+     * produção, deixe em branco pra usar este fallback.
      */
     private const EMAIL_PAGADOR_PADRAO = 'comanda@varandasbar.com.br';
 
     public function __construct(
         private readonly ?string $accessToken,
-        private readonly ?string $notificationUrl,
+        private readonly ?string $emailPagadorPadrao = null,
     ) {
     }
 
@@ -72,27 +82,33 @@ class MercadoPagoGateway implements MercadoPagoGatewayInterface
 
     public function gerarPixDinamico(float $valor, string $referenciaExterna, ?string $payerEmail = null): ResultadoCobranca
     {
-        $dados = $this->post('/v1/payments', $referenciaExterna, array_filter([
-            'transaction_amount' => round($valor, 2),
-            'payment_method_id' => 'pix',
-            'description' => 'Comanda Varandas Bar e Lanchonete',
+        $valorFormatado = number_format(round($valor, 2), 2, '.', '');
+
+        $dados = $this->post('/v1/orders', $referenciaExterna, [
+            'type' => 'online',
+            'total_amount' => $valorFormatado,
             'external_reference' => $referenciaExterna,
-            'notification_url' => $this->notificationUrlUtilizavel(),
+            'processing_mode' => 'automatic',
+            'transactions' => [
+                'payments' => [
+                    ['amount' => $valorFormatado, 'payment_method' => ['id' => 'pix', 'type' => 'bank_transfer']],
+                ],
+            ],
             // Pix exige payer.email mesmo sem cliente identificado — usa
             // o e-mail que o cliente informou ao abrir a comanda quando
             // existir (reduz sinal de fraude vs. um e-mail fixo sempre
             // igual); sem isso, cai no e-mail padrão do estabelecimento
             // (não há placeholder oficial da MP pra "anônimo").
-            'payer' => ['email' => $payerEmail ?: self::EMAIL_PAGADOR_PADRAO],
-        ]), contexto: ['operacao' => 'gerarPixDinamico']);
+            'payer' => ['email' => $payerEmail ?: ($this->emailPagadorPadrao ?: self::EMAIL_PAGADOR_PADRAO)],
+        ], contexto: ['operacao' => 'gerarPixDinamico']);
 
-        $qr = $dados['point_of_interaction']['transaction_data'] ?? [];
+        $metodo = $dados['transactions']['payments'][0]['payment_method'] ?? [];
 
         return new ResultadoCobranca(
             mpId: (string) $dados['id'],
-            status: $this->mapearStatusPagamento($dados['status'] ?? null),
-            qrCode: $qr['qr_code'] ?? null,
-            qrCodeBase64: $qr['qr_code_base64'] ?? null,
+            status: $this->mapearStatusOrder($dados['status'] ?? null),
+            qrCode: $metodo['qr_code'] ?? null,
+            qrCodeBase64: $metodo['qr_code_base64'] ?? null,
         );
     }
 
@@ -125,30 +141,6 @@ class MercadoPagoGateway implements MercadoPagoGatewayInterface
         }
 
         return $resposta->successful();
-    }
-
-    /**
-     * A MP valida `notification_url` como uma URL "de verdade" e rejeita
-     * o pagamento inteiro (400, "notificaction_url attribute must be
-     * url valid") se apontar pra localhost/host interno — confirmado em
-     * teste real contra o sandbox (agosto/2026), antes do domínio de
-     * produção existir. Enquanto isso, omite o campo (a criação do
-     * pagamento segue funcionando; falta só a confirmação automática
-     * via webhook até o deploy — ver ComandaPagamento).
-     */
-    private function notificationUrlUtilizavel(): ?string
-    {
-        if (! $this->notificationUrl) {
-            return null;
-        }
-
-        $host = parse_url($this->notificationUrl, PHP_URL_HOST);
-
-        if (! $host || in_array($host, ['localhost', '127.0.0.1'], true) || str_ends_with($host, '.local')) {
-            return null;
-        }
-
-        return $this->notificationUrl;
     }
 
     public function listarTerminais(): array

@@ -1,0 +1,102 @@
+name: Deploy para produção (Hostinger)
+
+# Dispara ao dar push em main. Compila tudo aqui no runner (composer +
+# npm) porque hospedagem compartilhada normalmente não tem Node
+# disponível via SSH e tem CPU/memória limitadas pra rodar o build lá —
+# só envia o resultado já pronto pro servidor.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar PHP 8.2
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: composer:v2
+          coverage: none
+
+      - name: Configurar Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      # .env aqui é só pra permitir o build rodar (package:discover, Vite
+      # lendo VITE_*) — nunca é enviado pro servidor (ver exclusão no
+      # rsync). As credenciais reais de produção vivem só no .env do
+      # servidor, criado manualmente uma vez (ver instruções de deploy).
+      - name: Preparar .env de build (não vai pro servidor)
+        run: |
+          cp .env.example .env
+          php artisan key:generate --ansi
+
+      - name: Instalar dependências do Composer (produção)
+        run: composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+
+      - name: Instalar dependências do NPM e compilar assets
+        run: |
+          npm ci
+          npm run build
+
+      - name: Carregar chave SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Confiar no host do servidor
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p "${{ secrets.SSH_PORT }}" "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
+
+      # --delete mantém o servidor idêntico ao repositório, mas os
+      # --exclude abaixo protegem tudo que só existe no servidor
+      # (.env com credenciais reais, uploads de fotos de produto, logs,
+      # sessões, cache) — rsync nunca deleta o que está numa exclusão.
+      - name: Enviar arquivos pro servidor (rsync)
+        run: |
+          rsync -avz --delete \
+            --exclude='.git/' \
+            --exclude='.github/' \
+            --exclude='node_modules/' \
+            --exclude='tests/' \
+            --exclude='.env' \
+            --exclude='.env.example' \
+            --exclude='storage/' \
+            --exclude='public/storage' \
+            --exclude='*.sqlite' \
+            -e "ssh -p ${{ secrets.SSH_PORT }}" \
+            ./ "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.DEPLOY_PATH }}/"
+
+      - name: Rodar migrations e recriar caches no servidor
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            cd "${{ secrets.DEPLOY_PATH }}"
+
+            # Garante que as pastas que ficam de fora do rsync existem
+            # (primeira vez) e têm permissão de escrita.
+            mkdir -p storage/framework/{cache/data,sessions,testing,views} storage/logs storage/app/public bootstrap/cache
+            chmod -R 775 storage bootstrap/cache
+
+            php artisan down --render="errors::503" || true
+
+            php artisan migrate --force
+            php artisan storage:link || true
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+
+            php artisan up

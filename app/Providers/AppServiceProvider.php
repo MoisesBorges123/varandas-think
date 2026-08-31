@@ -22,7 +22,7 @@ class AppServiceProvider extends ServiceProvider
         // preenchido no .env. Testes trocam esse binding por um fake.
         $this->app->bind(MercadoPagoGatewayInterface::class, fn () => new MercadoPagoGateway(
             config('services.mercadopago.access_token'),
-            config('services.mercadopago.notification_url'),
+            config('services.mercadopago.email_pagador_padrao'),
         ));
     }
 

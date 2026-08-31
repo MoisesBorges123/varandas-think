@@ -172,10 +172,11 @@ class PagamentoServiceTest extends TestCase
     public function test_webhook_confirma_pagamento_pendente_e_fecha_comanda_se_saldo_zerado(): void
     {
         $this->mock(MercadoPagoGatewayInterface::class, function ($mock) {
-            $mock->shouldReceive('consultarStatusPagamento')
+            $mock->shouldReceive('consultarStatusOrdemPoint')
                 ->once()
                 ->with('mp-999')
                 ->andReturn(StatusPagamento::CONFIRMADO->value);
+            $mock->shouldNotReceive('consultarStatusPagamento');
         });
 
         $comanda = Comanda::factory()->create();
