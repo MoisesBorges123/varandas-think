@@ -43,3 +43,8 @@ yarn.lock
 /cypress/screenshots
 /cypress/videos
 /cypress/downloads
+
+# Resquício de demos Python que vêm no pacote comprado do template Admitro
+# (Main_File/*/Pipfile, vazios, sem relação com o projeto) — travavam o
+# scan automático de dependências do Dependabot (ecossistema pip).
+Pipfile

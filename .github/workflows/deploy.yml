@@ -1,12 +1,12 @@
 name: Deploy para produção (Hostinger)
 
-# Dispara ao dar push em main. Compila tudo aqui no runner (composer +
+# Dispara ao dar push em master. Compila tudo aqui no runner (composer +
 # npm) porque hospedagem compartilhada normalmente não tem Node
 # disponível via SSH e tem CPU/memória limitadas pra rodar o build lá —
 # só envia o resultado já pronto pro servidor.
 on:
   push:
-    branches: [main]
+    branches: [master]
   workflow_dispatch: {}
 
 jobs:
