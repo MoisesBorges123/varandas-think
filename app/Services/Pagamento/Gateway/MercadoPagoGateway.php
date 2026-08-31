@@ -32,6 +32,14 @@ class MercadoPagoGateway implements MercadoPagoGatewayInterface
 
     private const TIMEOUT_SEGUNDOS = 15;
 
+    /**
+     * E-mail usado quando o cliente não informou um ao abrir a comanda.
+     * Precisa de um TLD público de verdade — `.local` é reservado
+     * (RFC 6762) e a validação da MP rejeita com "payer.email must be a
+     * valid email" (confirmado em teste real, agosto/2026).
+     */
+    private const EMAIL_PAGADOR_PADRAO = 'comanda@varandasbar.com.br';
+
     public function __construct(
         private readonly ?string $accessToken,
         private readonly ?string $notificationUrl,
@@ -73,9 +81,9 @@ class MercadoPagoGateway implements MercadoPagoGatewayInterface
             // Pix exige payer.email mesmo sem cliente identificado — usa
             // o e-mail que o cliente informou ao abrir a comanda quando
             // existir (reduz sinal de fraude vs. um e-mail fixo sempre
-            // igual); sem isso, cai num e-mail fixo do estabelecimento
+            // igual); sem isso, cai no e-mail padrão do estabelecimento
             // (não há placeholder oficial da MP pra "anônimo").
-            'payer' => ['email' => $payerEmail ?: 'comanda@varandas.local'],
+            'payer' => ['email' => $payerEmail ?: self::EMAIL_PAGADOR_PADRAO],
         ]), contexto: ['operacao' => 'gerarPixDinamico']);
 
         $qr = $dados['point_of_interaction']['transaction_data'] ?? [];

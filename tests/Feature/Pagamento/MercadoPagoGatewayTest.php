@@ -56,7 +56,9 @@ class MercadoPagoGatewayTest extends TestCase
 
         $this->gateway()->gerarPixDinamico(10.00, 'ref-sem-email');
 
-        Http::assertSent(fn ($request) => $request['payer']['email'] === 'comanda@varandas.local');
+        // .local é um TLD reservado (RFC 6762) e a MP rejeita como
+        // e-mail inválido — regressão real encontrada em teste manual.
+        Http::assertSent(fn ($request) => $request['payer']['email'] === 'comanda@varandasbar.com.br');
     }
 
     public function test_cobrar_via_maquininha_envia_payload_de_orders_api(): void
