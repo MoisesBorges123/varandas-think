@@ -33,13 +33,15 @@ jobs:
       # lendo VITE_*) — nunca é enviado pro servidor (ver exclusão no
       # rsync). As credenciais reais de produção vivem só no .env do
       # servidor, criado manualmente uma vez (ver instruções de deploy).
-      - name: Preparar .env de build (não vai pro servidor)
-        run: |
-          cp .env.example .env
-          php artisan key:generate --ansi
+      - name: Copiar .env de exemplo (não vai pro servidor)
+        run: cp .env.example .env
 
       - name: Instalar dependências do Composer (produção)
         run: composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+
+      # Só depois do composer install porque artisan precisa de vendor/autoload.php.
+      - name: Gerar APP_KEY de build
+        run: php artisan key:generate --ansi
 
       - name: Instalar dependências do NPM e compilar assets
         run: |
