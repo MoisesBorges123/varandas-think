@@ -17,7 +17,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('vendas_avulsas', function (Blueprint $table) {
-            $table->dropIndex(['produto_id']);
+            // dropConstrainedForeignId já cuida de soltar a FK e o índice
+            // dela nessa ordem — um dropIndex(['produto_id']) manual antes
+            // falha (MySQL error 1553: índice ainda preso à FK).
             $table->dropConstrainedForeignId('produto_id');
             $table->dropColumn('quantidade');
         });

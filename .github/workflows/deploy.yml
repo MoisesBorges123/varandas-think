@@ -116,7 +116,12 @@ jobs:
             $PHP artisan down --render="errors::503" || true
 
             $PHP artisan migrate --force
-            $PHP artisan storage:link || true
+
+            # artisan storage:link usa exec() internamente, que fica
+            # desabilitado por padrão nesse plano de hospedagem
+            # compartilhada — cria o link direto via shell (idempotente).
+            ln -sf ../storage/app/public public/storage
+
             $PHP artisan config:cache
             $PHP artisan route:cache
             $PHP artisan view:cache
