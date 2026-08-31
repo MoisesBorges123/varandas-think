@@ -110,4 +110,39 @@ class MercadoPagoWebhookControllerTest extends TestCase
         ])->postJson('/webhooks/mercadopago', $this->payload('mp-abc'))
             ->assertStatus(401);
     }
+
+    public function test_assinatura_com_timestamp_fora_da_janela_e_recusada(): void
+    {
+        $this->mock(PagamentoService::class, function ($mock) {
+            $mock->shouldNotReceive('processarWebhook');
+        });
+
+        $requestId = 'req-4';
+        $ts = (string) (time() - 3600); // 1h atrás — fora da janela de tolerância
+        $assinatura = $this->assinar('mp-abc', $requestId, $ts);
+
+        $this->withHeaders([
+            'x-signature' => "ts={$ts},v1={$assinatura}",
+            'x-request-id' => $requestId,
+        ])->postJson('/webhooks/mercadopago', $this->payload('mp-abc'))
+            ->assertStatus(401);
+    }
+
+    public function test_tipo_de_evento_fora_da_lista_tratada_e_ignorado_mas_retorna_200(): void
+    {
+        $this->mock(PagamentoService::class, function ($mock) {
+            $mock->shouldNotReceive('processarWebhook');
+        });
+
+        $payload = ['type' => 'merchant_order', 'data' => ['id' => 'mo-1']];
+        $requestId = 'req-5';
+        $ts = (string) time();
+        $assinatura = $this->assinar('mo-1', $requestId, $ts);
+
+        $this->withHeaders([
+            'x-signature' => "ts={$ts},v1={$assinatura}",
+            'x-request-id' => $requestId,
+        ])->postJson('/webhooks/mercadopago', $payload)
+            ->assertOk();
+    }
 }

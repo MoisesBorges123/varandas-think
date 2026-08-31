@@ -3,7 +3,10 @@
 namespace App\Services\Pagamento\Gateway;
 
 use App\Enums\Pagamento\StatusPagamento;
+use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 /**
@@ -27,6 +30,8 @@ class MercadoPagoGateway implements MercadoPagoGatewayInterface
 {
     private const BASE_URL = 'https://api.mercadopago.com';
 
+    private const TIMEOUT_SEGUNDOS = 15;
+
     public function __construct(
         private readonly ?string $accessToken,
         private readonly ?string $notificationUrl,
@@ -35,25 +40,21 @@ class MercadoPagoGateway implements MercadoPagoGatewayInterface
 
     public function cobrarViaMaquininha(float $valor, string $deviceId, string $referenciaExterna): ResultadoCobranca
     {
-        $resposta = $this->http()
-            ->post(self::BASE_URL.'/v1/orders', [
-                'type' => 'point',
-                'external_reference' => $referenciaExterna,
-                'transactions' => [
-                    'payments' => [
-                        ['amount' => number_format($valor, 2, '.', '')],
-                    ],
+        $dados = $this->post('/v1/orders', $referenciaExterna, [
+            'type' => 'point',
+            'external_reference' => $referenciaExterna,
+            'transactions' => [
+                'payments' => [
+                    ['amount' => number_format(round($valor, 2), 2, '.', '')],
                 ],
-                'config' => [
-                    'point' => [
-                        'terminal_id' => $deviceId,
-                        'print_on_terminal' => 'no_ticket',
-                    ],
+            ],
+            'config' => [
+                'point' => [
+                    'terminal_id' => $deviceId,
+                    'print_on_terminal' => 'no_ticket',
                 ],
-            ])
-            ->throw();
-
-        $dados = $resposta->json();
+            ],
+        ], contexto: ['operacao' => 'cobrarViaMaquininha', 'device_id' => $deviceId]);
 
         return new ResultadoCobranca(
             mpId: (string) $dados['id'],
@@ -61,23 +62,22 @@ class MercadoPagoGateway implements MercadoPagoGatewayInterface
         );
     }
 
-    public function gerarPixDinamico(float $valor, string $referenciaExterna): ResultadoCobranca
+    public function gerarPixDinamico(float $valor, string $referenciaExterna, ?string $payerEmail = null): ResultadoCobranca
     {
-        $resposta = $this->http()
-            ->post(self::BASE_URL.'/v1/payments', array_filter([
-                'transaction_amount' => $valor,
-                'payment_method_id' => 'pix',
-                'description' => 'Comanda Varandas Bar e Lanchonete',
-                'external_reference' => $referenciaExterna,
-                'notification_url' => $this->notificationUrl,
-                // Pix exige payer.email mesmo sem cliente identificado —
-                // não há placeholder oficial da MP pra isso, usamos um
-                // e-mail fixo do estabelecimento (não afeta nada fiscal).
-                'payer' => ['email' => 'comanda@varandas.local'],
-            ]))
-            ->throw();
+        $dados = $this->post('/v1/payments', $referenciaExterna, array_filter([
+            'transaction_amount' => round($valor, 2),
+            'payment_method_id' => 'pix',
+            'description' => 'Comanda Varandas Bar e Lanchonete',
+            'external_reference' => $referenciaExterna,
+            'notification_url' => $this->notificationUrl,
+            // Pix exige payer.email mesmo sem cliente identificado — usa
+            // o e-mail que o cliente informou ao abrir a comanda quando
+            // existir (reduz sinal de fraude vs. um e-mail fixo sempre
+            // igual); sem isso, cai num e-mail fixo do estabelecimento
+            // (não há placeholder oficial da MP pra "anônimo").
+            'payer' => ['email' => $payerEmail ?: 'comanda@varandas.local'],
+        ]), contexto: ['operacao' => 'gerarPixDinamico']);
 
-        $dados = $resposta->json();
         $qr = $dados['point_of_interaction']['transaction_data'] ?? [];
 
         return new ResultadoCobranca(
@@ -90,30 +90,81 @@ class MercadoPagoGateway implements MercadoPagoGatewayInterface
 
     public function consultarStatusPagamento(string $mpPaymentId): string
     {
-        $resposta = $this->http()->get(self::BASE_URL."/v1/payments/{$mpPaymentId}")->throw();
+        $dados = $this->get("/v1/payments/{$mpPaymentId}", contexto: ['operacao' => 'consultarStatusPagamento']);
 
-        return $this->mapearStatusPagamento($resposta->json('status'));
+        return $this->mapearStatusPagamento($dados['status'] ?? null);
     }
 
     public function consultarStatusOrdemPoint(string $mpOrderId): string
     {
-        $resposta = $this->http()->get(self::BASE_URL."/v1/orders/{$mpOrderId}")->throw();
+        $dados = $this->get("/v1/orders/{$mpOrderId}", contexto: ['operacao' => 'consultarStatusOrdemPoint']);
 
-        return $this->mapearStatusOrder($resposta->json('status'));
+        return $this->mapearStatusOrder($dados['status'] ?? null);
     }
 
     public function estornarPagamento(string $mpPaymentId): bool
     {
         $resposta = $this->http()
-            ->withHeaders(['X-Idempotency-Key' => (string) Str::uuid()])
+            ->withHeaders(['X-Idempotency-Key' => 'estorno-'.$mpPaymentId])
             ->post(self::BASE_URL."/v1/payments/{$mpPaymentId}/refunds");
+
+        if (! $resposta->successful()) {
+            Log::error('Mercado Pago: falha ao estornar pagamento.', [
+                'mp_payment_id' => $mpPaymentId,
+                'status_http' => $resposta->status(),
+                'resposta' => $resposta->json(),
+            ]);
+        }
 
         return $resposta->successful();
     }
 
-    private function http()
+    /**
+     * @return array<string, mixed>
+     */
+    private function post(string $caminho, string $idempotencyKey, array $payload, array $contexto): array
     {
-        return Http::withToken((string) $this->accessToken)->acceptJson();
+        try {
+            $resposta = $this->http()
+                ->withHeaders(['X-Idempotency-Key' => $idempotencyKey])
+                ->post(self::BASE_URL.$caminho, $payload)
+                ->throw();
+
+            return $resposta->json();
+        } catch (RequestException $e) {
+            $this->logarFalha($e, $contexto);
+
+            throw $e;
+        }
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function get(string $caminho, array $contexto): array
+    {
+        try {
+            return $this->http()->get(self::BASE_URL.$caminho)->throw()->json();
+        } catch (RequestException $e) {
+            $this->logarFalha($e, $contexto);
+
+            throw $e;
+        }
+    }
+
+    private function logarFalha(RequestException $e, array $contexto): void
+    {
+        Log::error('Mercado Pago: chamada à API falhou.', $contexto + [
+            'status_http' => $e->response->status(),
+            'resposta' => $e->response->json(),
+        ]);
+    }
+
+    private function http(): PendingRequest
+    {
+        return Http::withToken((string) $this->accessToken)
+            ->acceptJson()
+            ->timeout(self::TIMEOUT_SEGUNDOS);
     }
 
     /**

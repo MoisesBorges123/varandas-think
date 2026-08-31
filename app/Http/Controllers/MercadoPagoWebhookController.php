@@ -20,15 +20,32 @@ use Illuminate\Http\Request;
  */
 class MercadoPagoWebhookController extends Controller
 {
+    /**
+     * Eventos que o sistema sabe tratar — qualquer outro `type`/`topic`
+     * (ex.: `merchant_order`) é aceito (200) mas ignorado, seguindo o
+     * padrão recomendado pela MP de nunca dar erro pra evento
+     * desconhecido (ela reenviaria indefinidamente).
+     */
+    private const TIPOS_TRATADOS = ['payment', 'order'];
+
+    /**
+     * Janela de tolerância pro timestamp da assinatura — defesa extra
+     * contra replay de uma requisição capturada (o HMAC sozinho não
+     * expira; sem isso, o mesmo request assinado continuaria válido pra
+     * sempre).
+     */
+    private const TOLERANCIA_TS_SEGUNDOS = 600;
+
     public function __invoke(Request $request, PagamentoService $service): JsonResponse
     {
         if (! $this->assinaturaValida($request)) {
             return response()->json(['message' => 'assinatura inválida'], 401);
         }
 
+        $tipo = (string) ($request->input('type') ?? $request->input('topic', ''));
         $mpResourceId = (string) $request->input('data.id', '');
 
-        if ($mpResourceId !== '') {
+        if (in_array($tipo, self::TIPOS_TRATADOS, true) && $mpResourceId !== '') {
             $service->processarWebhook($mpResourceId);
         }
 
@@ -47,7 +64,7 @@ class MercadoPagoWebhookController extends Controller
 
         [$ts, $v1] = $this->extrairPartesDaAssinatura((string) $request->header('x-signature', ''));
 
-        if ($ts === null || $v1 === null) {
+        if ($ts === null || $v1 === null || ! $this->timestampDentroDaJanela($ts)) {
             return false;
         }
 
@@ -58,6 +75,15 @@ class MercadoPagoWebhookController extends Controller
         $assinaturaCalculada = hash_hmac('sha256', $manifest, $secret);
 
         return hash_equals($assinaturaCalculada, $v1);
+    }
+
+    private function timestampDentroDaJanela(string $ts): bool
+    {
+        if (! ctype_digit($ts)) {
+            return false;
+        }
+
+        return abs(time() - (int) $ts) <= self::TOLERANCIA_TS_SEGUNDOS;
     }
 
     /**

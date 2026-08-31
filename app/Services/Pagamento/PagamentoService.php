@@ -167,8 +167,12 @@ class PagamentoService extends ServiceBase
         }
 
         // pix_celular ou pix_qrcode_impresso — mesma chamada técnica,
-        // só muda onde o QR é exibido (ver FormaPagamento::ehPix()).
-        $resultado = $this->gateway->gerarPixDinamico($valor, $referenciaExterna);
+        // só muda onde o QR é exibido (ver FormaPagamento::ehPix()). Usa
+        // o e-mail do cliente quando ele identificou um ao abrir a
+        // comanda (reduz sinal de fraude na MP vs. e-mail fixo sempre
+        // igual).
+        $comanda = $this->comandaService->encontrarComRelacoes($comandaId);
+        $resultado = $this->gateway->gerarPixDinamico($valor, $referenciaExterna, $comanda->cliente_email);
 
         $dadosBase += [
             'mp_payment_id' => $resultado->mpId,

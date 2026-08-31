@@ -22,9 +22,11 @@ interface MercadoPagoGatewayInterface
     /**
      * Gera um Pix dinâmico (QR + copia-e-cola) — usado tanto pro Pix no
      * celular do garçom quanto pro QR impresso na comanda (mesma
-     * chamada técnica, só muda onde o QR é exibido).
+     * chamada técnica, só muda onde o QR é exibido). $payerEmail é o
+     * e-mail do cliente quando ele identificou um ao abrir a comanda
+     * (reduz sinal de fraude na MP vs. usar sempre um e-mail fixo).
      */
-    public function gerarPixDinamico(float $valor, string $referenciaExterna): ResultadoCobranca;
+    public function gerarPixDinamico(float $valor, string $referenciaExterna, ?string $payerEmail = null): ResultadoCobranca;
 
     /**
      * Consulta o status atual de um pagamento Pix/Payments API — nunca
