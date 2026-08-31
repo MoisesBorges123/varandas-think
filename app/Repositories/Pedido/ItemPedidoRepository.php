@@ -17,7 +17,7 @@ class ItemPedidoRepository extends Repository implements ItemPedidoRepositoryInt
 
     private function comRelacoesPadrao()
     {
-        return $this->query()->with(['comanda.mesa', 'comanda.garcom', 'produto', 'lancadoPor', 'aprovadoPor']);
+        return $this->query()->with(['comanda.mesa', 'comanda.garcom', 'produto', 'precoProduto', 'lancadoPor', 'aprovadoPor']);
     }
 
     public function encontrarComRelacoes(int $id): ItemPedido

@@ -20,6 +20,10 @@ class ConfiguracaoDTO extends DTOBase
 
     private bool $permitirGarcomExcluirItemColega = false;
 
+    private ?string $mpDeviceIdBalcao = null;
+
+    private ?string $mpDeviceIdPortatil = null;
+
     public function setLatitude(?float $latitude): self
     {
         $this->latitude = $latitude;
@@ -104,6 +108,30 @@ class ConfiguracaoDTO extends DTOBase
         return $this->permitirGarcomExcluirItemColega;
     }
 
+    public function setMpDeviceIdBalcao(?string $mpDeviceIdBalcao): self
+    {
+        $this->mpDeviceIdBalcao = $mpDeviceIdBalcao;
+
+        return $this;
+    }
+
+    public function getMpDeviceIdBalcao(): ?string
+    {
+        return $this->mpDeviceIdBalcao;
+    }
+
+    public function setMpDeviceIdPortatil(?string $mpDeviceIdPortatil): self
+    {
+        $this->mpDeviceIdPortatil = $mpDeviceIdPortatil;
+
+        return $this;
+    }
+
+    public function getMpDeviceIdPortatil(): ?string
+    {
+        return $this->mpDeviceIdPortatil;
+    }
+
     public function toArray(): array
     {
         return [
@@ -114,6 +142,8 @@ class ConfiguracaoDTO extends DTOBase
             'permitir_garcom_cancelar_item_colega' => $this->permitirGarcomCancelarItemColega,
             'permitir_garcom_excluir_proprio_item' => $this->permitirGarcomExcluirProprioItem,
             'permitir_garcom_excluir_item_colega' => $this->permitirGarcomExcluirItemColega,
+            'mp_device_id_balcao' => $this->mpDeviceIdBalcao,
+            'mp_device_id_portatil' => $this->mpDeviceIdPortatil,
         ];
     }
 
@@ -135,6 +165,8 @@ class ConfiguracaoDTO extends DTOBase
             ->setValidacaoEstoqueAutomaticaAtiva((bool) $componente->validacaoEstoqueAutomaticaAtiva)
             ->setPermitirGarcomCancelarItemColega((bool) $componente->permitirGarcomCancelarItemColega)
             ->setPermitirGarcomExcluirProprioItem((bool) $componente->permitirGarcomExcluirProprioItem)
-            ->setPermitirGarcomExcluirItemColega((bool) $componente->permitirGarcomExcluirItemColega);
+            ->setPermitirGarcomExcluirItemColega((bool) $componente->permitirGarcomExcluirItemColega)
+            ->setMpDeviceIdBalcao($componente->mpDeviceIdBalcao ?: null)
+            ->setMpDeviceIdPortatil($componente->mpDeviceIdPortatil ?: null);
     }
 }

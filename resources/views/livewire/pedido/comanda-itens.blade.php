@@ -8,6 +8,11 @@
                 <li class="breadcrumb-item active">Itens</li>
             </ol>
         </div>
+        <div class="page-rightheader">
+            <a href="{{ route('comandas.pagamento', $comanda->id) }}" wire:navigate class="btn btn-success">
+                <i class="fe fe-credit-card mr-1"></i> Pagamento
+            </a>
+        </div>
     </div>
 
     <div class="row">

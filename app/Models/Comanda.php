@@ -54,6 +54,11 @@ class Comanda extends Model
         return $this->hasMany(ItemPedido::class);
     }
 
+    public function pagamentos(): HasMany
+    {
+        return $this->hasMany(Pagamento::class);
+    }
+
     public function estaAberta(): bool
     {
         return $this->status === StatusComanda::ABERTA;

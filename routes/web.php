@@ -22,7 +22,9 @@ use App\Livewire\Estoque\GrupoEquivalenciaIndex;
 use App\Livewire\Estoque\IngredienteForm;
 use App\Livewire\Estoque\ImportarNotaFiscal;
 use App\Livewire\Estoque\IngredienteIndex;
+use App\Http\Controllers\MercadoPagoWebhookController;
 use App\Livewire\Estoque\ReceitaForm;
+use App\Livewire\Pagamento\ComandaPagamento;
 use App\Livewire\Pedido\ComandaItens;
 use App\Livewire\Pedido\FilaAprovacao;
 use App\Livewire\Publico\ComandaAcesso;
@@ -93,6 +95,7 @@ Route::middleware('auth')->prefix('comandas')->name('comandas.')->group(function
     Route::get('/abrir', ComandaAbrirForm::class)->name('abrir');
     Route::get('/configuracoes', ConfiguracaoForm::class)->name('configuracoes');
     Route::get('/{comanda}/itens', ComandaItens::class)->name('itens');
+    Route::get('/{comanda}/pagamento', ComandaPagamento::class)->name('pagamento');
 });
 
 Route::middleware('auth')->prefix('pedidos')->name('pedidos.')->group(function () {
@@ -104,6 +107,11 @@ Route::get('/balcao', BalcaoPainel::class)->middleware('auth')->name('balcao');
 Route::get('/venda-avulsa', VendaAvulsaPainel::class)->middleware('auth')->name('venda-avulsa');
 
 Route::get('/cozinha', PainelCozinha::class)->middleware('auth')->name('cozinha');
+
+// Webhook do Mercado Pago (CLAUDE.md seção 6) — chamado pelos servidores
+// da MP, sem sessão/CSRF. Autenticidade verificada por assinatura dentro
+// do controller (ver bootstrap/app.php pra exceção de CSRF desta rota).
+Route::post('/webhooks/mercadopago', MercadoPagoWebhookController::class)->name('webhooks.mercadopago');
 
 // ==================================================================
 // ROTAS PÚBLICAS — SEM MIDDLEWARE 'auth' (fluxo do cliente via QR code)

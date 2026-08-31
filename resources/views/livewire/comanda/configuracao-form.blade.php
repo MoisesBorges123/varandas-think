@@ -94,6 +94,34 @@
             </div>
         </div>
 
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Maquininhas Mercado Pago</h3>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted">
+                            Identificador (device_id/terminal_id) dos terminais Point vinculados à conta
+                            Mercado Pago (CLAUDE.md seção 6). Consulte em
+                            <code>GET /terminals/v1/list</code> na conta configurada — sem isso, a forma de
+                            pagamento correspondente fica desabilitada na tela de pagamento.
+                        </p>
+
+                        <div class="form-group">
+                            <label>Maquininha do balcão (API Point)</label>
+                            <input type="text" wire:model="mpDeviceIdBalcao" class="form-control" placeholder="ex: NEWLAND_N950__N950NCB801293324">
+                        </div>
+
+                        <div class="form-group mb-0">
+                            <label>Maquininha portátil (celular do garçom)</label>
+                            <input type="text" wire:model="mpDeviceIdPortatil" class="form-control" placeholder="ex: PAX_A910__A910123456789">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <button type="submit" class="btn btn-primary" wire:loading.attr="disabled" wire:target="salvar">
             <span wire:loading.remove wire:target="salvar">Salvar</span>
             <span wire:loading wire:target="salvar">Salvando...</span>

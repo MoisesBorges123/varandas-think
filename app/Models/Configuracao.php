@@ -19,6 +19,8 @@ class Configuracao extends Model
         'permitir_garcom_cancelar_item_colega',
         'permitir_garcom_excluir_proprio_item',
         'permitir_garcom_excluir_item_colega',
+        'mp_device_id_balcao',
+        'mp_device_id_portatil',
     ];
 
     protected function casts(): array

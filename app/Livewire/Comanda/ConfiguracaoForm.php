@@ -26,6 +26,10 @@ class ConfiguracaoForm extends Component
 
     public bool $permitirGarcomExcluirItemColega = false;
 
+    public string $mpDeviceIdBalcao = '';
+
+    public string $mpDeviceIdPortatil = '';
+
     public function mount(ConfiguracaoService $service): void
     {
         $configuracao = $service->obter();
@@ -38,6 +42,8 @@ class ConfiguracaoForm extends Component
             $this->permitirGarcomCancelarItemColega = (bool) $configuracao->permitir_garcom_cancelar_item_colega;
             $this->permitirGarcomExcluirProprioItem = (bool) $configuracao->permitir_garcom_excluir_proprio_item;
             $this->permitirGarcomExcluirItemColega = (bool) $configuracao->permitir_garcom_excluir_item_colega;
+            $this->mpDeviceIdBalcao = (string) ($configuracao->mp_device_id_balcao ?? '');
+            $this->mpDeviceIdPortatil = (string) ($configuracao->mp_device_id_portatil ?? '');
         }
     }
 

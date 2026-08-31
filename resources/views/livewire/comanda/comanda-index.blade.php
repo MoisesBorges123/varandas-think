@@ -102,6 +102,11 @@
                                         <a href="{{ route('comandas.itens', $comanda->id) }}" wire:navigate class="btn btn-sm btn-icon btn-primary" title="Ver itens">
                                             <i class="fe fe-list"></i>
                                         </a>
+                                        @if ($comanda->estaAberta())
+                                            <a href="{{ route('comandas.pagamento', $comanda->id) }}" wire:navigate class="btn btn-sm btn-icon btn-success" title="Pagamento">
+                                                <i class="fe fe-credit-card"></i>
+                                            </a>
+                                        @endif
                                         <button type="button" wire:click="verDetalhes({{ $comanda->id }})" class="btn btn-sm btn-icon btn-secondary" title="Ver detalhes">
                                             <i class="fe fe-eye"></i>
                                         </button>
