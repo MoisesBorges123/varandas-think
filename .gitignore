@@ -32,8 +32,9 @@ Thumbs.db
 # Composer
 composer.phar
 
-# NPM
-package-lock.json
+# NPM — package-lock.json É versionado de propósito (precisa pra `npm ci`
+# e pro cache do actions/setup-node no deploy funcionarem com build
+# reprodutível); yarn não é usado neste projeto.
 yarn.lock
 
 # Logs
