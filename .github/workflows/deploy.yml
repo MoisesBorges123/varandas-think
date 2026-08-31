@@ -49,7 +49,14 @@ jobs:
       # https://github.com/npm/cli/issues/4828). npm install ainda
       # respeita o package-lock.json pra resolução de versões, só usa um
       # algoritmo de instalação mais tolerante que não bate nesse bug.
+      #
+      # CYPRESS_INSTALL_BINARY=0: cypress é devDependency só pra testes
+      # e2e locais, o build de produção (vite build) não usa — pula o
+      # download do binário (~100MB), o pacote em si continua resolvido
+      # normalmente pelo lockfile.
       - name: Instalar dependências do NPM e compilar assets
+        env:
+          CYPRESS_INSTALL_BINARY: 0
         run: |
           npm install
           npm run build
