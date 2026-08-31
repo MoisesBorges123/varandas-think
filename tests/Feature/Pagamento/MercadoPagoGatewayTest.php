@@ -13,9 +13,9 @@ class MercadoPagoGatewayTest extends TestCase
 {
     private const TOKEN_FAKE_NAO_REAL = 'token-fake-para-teste-000';
 
-    private function gateway(): MercadoPagoGateway
+    private function gateway(?string $notificationUrl = 'https://varandasbar.com.br/webhooks/mercadopago'): MercadoPagoGateway
     {
-        return new MercadoPagoGateway(self::TOKEN_FAKE_NAO_REAL, 'https://varandas.local/webhooks/mercadopago');
+        return new MercadoPagoGateway(self::TOKEN_FAKE_NAO_REAL, $notificationUrl);
     }
 
     public function test_gerar_pix_dinamico_envia_payload_correto_e_idempotency_key(): void
@@ -46,6 +46,30 @@ class MercadoPagoGatewayTest extends TestCase
                 && $request->hasHeader('X-Idempotency-Key', 'ref-abc')
                 && $request->hasHeader('Authorization', 'Bearer '.self::TOKEN_FAKE_NAO_REAL);
         });
+    }
+
+    public function test_notification_url_publica_e_enviada(): void
+    {
+        Http::fake(['api.mercadopago.com/*' => Http::response(['id' => 1, 'status' => 'pending'], 201)]);
+
+        $this->gateway('https://varandasbar.com.br/webhooks/mercadopago')->gerarPixDinamico(10.00, 'ref-1');
+
+        Http::assertSent(fn ($request) => $request['notification_url'] === 'https://varandasbar.com.br/webhooks/mercadopago');
+    }
+
+    /**
+     * Regressão real: a MP rejeita a criação do pagamento inteiro (400)
+     * quando notification_url aponta pra localhost — "notificaction_url
+     * attribute must be url valid" (confirmado contra o sandbox,
+     * agosto/2026, antes do domínio de produção existir).
+     */
+    public function test_notification_url_localhost_e_omitida(): void
+    {
+        Http::fake(['api.mercadopago.com/*' => Http::response(['id' => 1, 'status' => 'pending'], 201)]);
+
+        $this->gateway('http://localhost:8000/webhooks/mercadopago')->gerarPixDinamico(10.00, 'ref-2');
+
+        Http::assertSent(fn ($request) => ! array_key_exists('notification_url', $request->data()));
     }
 
     public function test_gerar_pix_dinamico_sem_email_do_cliente_usa_fallback(): void

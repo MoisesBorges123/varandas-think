@@ -77,7 +77,7 @@ class MercadoPagoGateway implements MercadoPagoGatewayInterface
             'payment_method_id' => 'pix',
             'description' => 'Comanda Varandas Bar e Lanchonete',
             'external_reference' => $referenciaExterna,
-            'notification_url' => $this->notificationUrl,
+            'notification_url' => $this->notificationUrlUtilizavel(),
             // Pix exige payer.email mesmo sem cliente identificado — usa
             // o e-mail que o cliente informou ao abrir a comanda quando
             // existir (reduz sinal de fraude vs. um e-mail fixo sempre
@@ -125,6 +125,30 @@ class MercadoPagoGateway implements MercadoPagoGatewayInterface
         }
 
         return $resposta->successful();
+    }
+
+    /**
+     * A MP valida `notification_url` como uma URL "de verdade" e rejeita
+     * o pagamento inteiro (400, "notificaction_url attribute must be
+     * url valid") se apontar pra localhost/host interno — confirmado em
+     * teste real contra o sandbox (agosto/2026), antes do domínio de
+     * produção existir. Enquanto isso, omite o campo (a criação do
+     * pagamento segue funcionando; falta só a confirmação automática
+     * via webhook até o deploy — ver ComandaPagamento).
+     */
+    private function notificationUrlUtilizavel(): ?string
+    {
+        if (! $this->notificationUrl) {
+            return null;
+        }
+
+        $host = parse_url($this->notificationUrl, PHP_URL_HOST);
+
+        if (! $host || in_array($host, ['localhost', '127.0.0.1'], true) || str_ends_with($host, '.local')) {
+            return null;
+        }
+
+        return $this->notificationUrl;
     }
 
     public function listarTerminais(): array
